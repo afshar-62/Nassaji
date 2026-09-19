@@ -1,0 +1,6 @@
+{
+  "name": "بازارگاه تخصصی صنعت نساجی و پوشاک",
+  "description": "سامانه جامع بازارگاه، نیازمندی‌ها، نقشه کسب‌وکارها و ویترین تخصصی صنعت نساجی، خیاطی و پوشاک",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
