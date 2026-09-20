@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Sparkles, Mail, Menu, X, ChevronDown, Check, Loader2 } from 'lucide-react';
-import { locationsService } from '../core/api/locations.service';
+import React, { useState } from 'react';
+import { Search, MapPin, Sparkles, Mail, Menu, ChevronDown, X } from 'lucide-react';
+import { LocationHierarchyPickerModal } from './LocationHierarchyPickerModal';
 
 interface HeaderProps {
   selectedCity: string;
@@ -12,19 +12,6 @@ interface HeaderProps {
   onOpenSettings: () => void;
   onOpenBookmarks: () => void;
 }
-
-const DEFAULT_TEXTILE_CITIES = [
-  'تهران',
-  'اصفهان',
-  'کاشان',
-  'تبریز',
-  'یزد',
-  'مشهد',
-  'شیراز',
-  'قزوین',
-  'قم',
-  'اراک',
-];
 
 export const Header: React.FC<HeaderProps> = ({
   selectedCity,
@@ -38,31 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [availableCities, setAvailableCities] = useState<string[]>(DEFAULT_TEXTILE_CITIES);
-  const [isLoadingCities, setIsLoadingCities] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoadingCities(true);
-
-    locationsService
-      .fetchBusinessLocations()
-      .then((bizList) => {
-        if (isMounted) {
-          const fetchedCities = Array.from(new Set(bizList.map((b) => b.city).filter(Boolean)));
-          const combined = Array.from(new Set([...fetchedCities, ...DEFAULT_TEXTILE_CITIES]));
-          setAvailableCities(combined);
-          setIsLoadingCities(false);
-        }
-      })
-      .catch(() => {
-        if (isMounted) setIsLoadingCities(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const [selectedProvince, setSelectedProvince] = useState<string>('');
 
   return (
     <>
@@ -111,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
             title="پیام‌ها و اعلانات"
           >
             <Mail className="w-5 h-5" />
-            <span className="absolute top-1 left-1 w-2 h-2 rounded-full bg-rose-500" />
+            <span className="absolute top-1 left-1 w-2 h-2 rounded-full bg-orange-500" />
           </button>
 
           {/* Hamburger Menu Button */}
@@ -126,59 +89,18 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      {/* City Picker Modal */}
-      {isCityModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 animate-in fade-in zoom-in duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-amber-600" />
-                <h3 className="font-bold text-sm text-zinc-900">انتخاب شهر و استان</h3>
-              </div>
-              <button
-                id="close-city-modal-btn"
-                onClick={() => setIsCityModalOpen(false)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 mt-4 max-h-64 overflow-y-auto pr-1">
-              {isLoadingCities ? (
-                <div className="col-span-2 flex items-center justify-center py-6 text-zinc-400 text-xs gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
-                  <span>در حال دریافت شهرهای فعال...</span>
-                </div>
-              ) : availableCities.length === 0 ? (
-                <div className="col-span-2 text-center py-4 text-xs text-zinc-400">شهری یافت نشد</div>
-              ) : (
-                availableCities.map((cityName) => {
-                  const isSelected = selectedCity === cityName;
-                  return (
-                    <button
-                      key={cityName}
-                      id={`city-option-${cityName}`}
-                      onClick={() => {
-                        onSelectCity(cityName);
-                        setIsCityModalOpen(false);
-                      }}
-                      className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-medium border transition-all ${
-                        isSelected
-                          ? 'border-amber-500 bg-amber-50 text-amber-800'
-                          : 'border-zinc-200 hover:border-zinc-300 text-zinc-700'
-                      }`}
-                    >
-                      <span>{cityName}</span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-amber-600" />}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Hierarchical Location Picker Modal (Country -> Province -> City) */}
+      <LocationHierarchyPickerModal
+        isOpen={isCityModalOpen}
+        onClose={() => setIsCityModalOpen(false)}
+        selectedCity={selectedCity}
+        selectedProvince={selectedProvince}
+        onSelectLocation={({ province, city }) => {
+          setSelectedProvince(province);
+          onSelectCity(city);
+        }}
+        title="فیلتر موقعیت مکانی (کشور، استان، شهر)"
+      />
 
       {/* Hamburger Drawer Menu */}
       {isMenuOpen && (
@@ -187,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold text-sm">
+                  <div className="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
                     ن
                   </div>
                   <div>

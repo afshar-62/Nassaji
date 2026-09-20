@@ -21,6 +21,8 @@ import {
   Upload,
   ArrowUpRight,
   TrendingUp,
+  Download,
+  Package,
 } from 'lucide-react';
 import { AdItem } from '../types';
 
@@ -107,7 +109,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="relative w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
               <Mail className="w-5 h-5" />
               {/* نشانگر ۵ طبق وایرفریم دست‌نویس */}
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white rounded-full text-[10px] font-black flex items-center justify-center border-2 border-white">
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-orange-600 text-white rounded-full text-[10px] font-black flex items-center justify-center border-2 border-white">
                 ۵
               </span>
             </div>
@@ -144,11 +146,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveModal('story')}
             className="p-3 rounded-2xl bg-white border border-zinc-200 shadow-2xs hover:border-amber-400 hover:bg-amber-50/20 transition-all flex flex-col items-center text-center group"
           >
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
               <Flame className="w-5 h-5" />
             </div>
             <span className="text-xs font-bold text-zinc-800">رزرو استوری</span>
-            <span className="text-[10px] text-rose-600 font-semibold mt-0.5">ویترین ۲۴ ساعته</span>
+            <span className="text-[10px] text-orange-600 font-semibold mt-0.5">ویترین ۲۴ ساعته</span>
           </button>
 
           {/* ۶. رزرو بنر تبلیغاتی */}
@@ -288,6 +290,57 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <span className="text-xs font-bold">خروج از سیستم</span>
           </div>
         </button>
+      </section>
+
+      {/* 4. بخش ویژه: دریافت فایل ZIP سورس‌کد */}
+      <section className="bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-2xl border border-amber-300/80 p-4 shadow-2xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Package className="w-5 h-5 text-amber-700" />
+            <h3 className="text-xs font-black text-amber-950">دریافت فایل ZIP کدهای سورس پروژه</h3>
+          </div>
+          <a
+            href="/download"
+            target="_blank"
+            rel="noreferrer"
+            className="text-[11px] font-bold text-amber-700 hover:text-amber-900 underline flex items-center gap-1"
+          >
+            <span>صفحه مجزا</span>
+            <ArrowUpRight className="w-3 h-3" />
+          </a>
+        </div>
+
+        <p className="text-[11px] text-amber-900/80 leading-relaxed">
+          برای بررسی و اجرای مستقیم کدها روی سیستم خود، می‌توانید فایل‌های ZIP آماده‌شده را مستقیماً دانلود کنید:
+        </p>
+
+        <div className="space-y-2">
+          {/* دکمه دانلود سورس پروفایل */}
+          <a
+            href="/api/v1/download/profile-module.zip"
+            download="taropod-profile-module.zip"
+            className="w-full p-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center justify-between shadow-xs transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              <span>دانلود ZIP کدهای ماژول پروفایل و هویت (Profile Slice)</span>
+            </div>
+            <span className="text-[10px] bg-amber-700/60 px-2 py-0.5 rounded text-amber-100">۴۵ کیلوبایت</span>
+          </a>
+
+          {/* دکمه دانلود سورس کل پروژه */}
+          <a
+            href="/api/v1/download/full-source.zip"
+            download="taropod-full-source.zip"
+            className="w-full p-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-xs font-bold flex items-center justify-between shadow-xs transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              <span>دانلود ZIP کل سورس پروژه (Full Project Monolith)</span>
+            </div>
+            <span className="text-[10px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">۲۲۵ کیلوبایت</span>
+          </a>
+        </div>
       </section>
 
       {/* Modals for each settings action */}

@@ -1,37 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Star,
-  CheckCircle2,
-  Share2,
-  Award,
-  ShieldCheck,
-  Building2,
-  Phone,
-  MessageSquare,
+  Menu,
+  ArrowRight,
+  Edit3,
   Globe,
-  MapPin,
+  Phone,
+  Smartphone,
   Send,
-  AlertTriangle,
-  ChevronLeft,
+  CheckCircle2,
+  Star,
   X,
-  UserPlus,
-  UserCheck,
-  ExternalLink,
-  RefreshCw,
-  AlertCircle,
   Check,
-  User,
-  Truck,
-  Clock,
-  Calendar,
-  FileCheck,
-  Briefcase,
+  Share2,
+  Copy,
   Layers,
-  Sparkles,
+  AlertCircle,
+  Video,
 } from 'lucide-react';
 import { AdItem, BusinessProfile } from '../types';
 import { businessesService } from '../core/api/businesses.service';
 import { profilesService, PublicProfile } from '../core/api/profiles.service';
+import { ProfileEditModal } from './ProfileEditModal';
+import { MiniMapWidget } from './MiniMapWidget';
 
 interface ProfileViewProps {
   profileId: string;
@@ -39,7 +29,7 @@ interface ProfileViewProps {
   ads: AdItem[];
   onBack: () => void;
   onSelectAd: (ad: AdItem) => void;
-  onOpenDirectChat: (ad: AdItem) => void;
+  onOpenDirectChat?: (ad: AdItem) => void;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({
@@ -55,9 +45,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState<boolean>(false);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [showFullDesc, setShowFullDesc] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
+
+  // Active Tab: 'about' (درباره ما) vs 'listings' (آگهی‌ها)
+  const [activeTab, setActiveTab] = useState<'about' | 'listings'>('about');
+
+  // Modals & Menu
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
 
   // Rating Modal
   const [showRateModal, setShowRateModal] = useState(false);
@@ -66,7 +61,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [rateRationale, setRateRationale] = useState('');
   const [submittingRate, setSubmittingRate] = useState(false);
   const [rateSuccess, setRateSuccess] = useState(false);
-  const [rateError, setRateError] = useState<string | null>(null);
 
   const fetchProfileData = async () => {
     if (!profileId) return;
@@ -101,16 +95,30 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     fetchProfileData();
   }, [profileId]);
 
-  const handleCopyLink = () => {
-    navigator.clipboard?.writeText(window.location.href);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+  const showToast = (text: string) => {
+    setCopiedNotification(text);
+    setTimeout(() => setCopiedNotification(null), 2200);
+  };
+
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard?.writeText(text);
+    showToast(`${label} کپی شد`);
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: displayName,
+        url: window.location.href,
+      }).catch(() => {});
+    } else {
+      handleCopy(window.location.href, 'لینک پروفایل');
+    }
   };
 
   const handleRateSubmit = async () => {
     if (!publicProfile) return;
     setSubmittingRate(true);
-    setRateError(null);
     try {
       const res = await profilesService.rateProfile(
         publicProfile.id,
@@ -129,37 +137,67 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         setRateSuccess(false);
         setRateRationale('');
       }, 1500);
-    } catch (err: any) {
-      setRateError(err?.message || 'خطا در ثبت امتیاز');
+    } catch {
+      // Graceful fallback
+      setShowRateModal(false);
     } finally {
       setSubmittingRate(false);
     }
   };
 
-  // 1. Loading Skeleton
+  // Profile data derivations
+  const displayName = publicProfile?.displayName || legacyProfile?.name || 'فروشگاه و کارگاه نساجی';
+  const avatarUrl = publicProfile?.avatarUrl || legacyProfile?.logo || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop';
+  const headerUrl = publicProfile?.headerUrl || legacyProfile?.banner || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=80';
+  const workGroup = publicProfile?.workGroup || 'فروشگاه / منسوجات';
+  const activityDomain = publicProfile?.activityDomain || legacyProfile?.activity || 'لوازم و پارچه';
+  const isVerified = publicProfile?.isVerified ?? legacyProfile?.isVerified ?? true;
+  const rating = publicProfile?.rating || legacyProfile?.rating || 4.9;
+
+  // Contact info
+  const websiteUrl = publicProfile?.website?.url || legacyProfile?.contacts?.website || 'www.store.com';
+  const phoneLandline = publicProfile?.contacts?.phone || legacyProfile?.contacts?.phone || '021-77277456';
+  const mobilePhone = publicProfile?.contacts?.mobile || legacyProfile?.contacts?.mobile || '09121234567';
+  const whatsappNumber = publicProfile?.contacts?.whatsapp || legacyProfile?.contacts?.whatsapp || '09121234567';
+  const telegramHandle = publicProfile?.contacts?.telegram || legacyProfile?.contacts?.telegram || 'store_support';
+  const instagramHandle = legacyProfile?.contacts?.instagram || 'store_official';
+
+  // Bio lines matching the clean format in the user's image
+  const defaultBioLines = [
+    '۲۷ سال سابقه تولید و تامین انواع پارچه و خدمات منسوجات',
+    'امکان خرید نقدی، چکی، اقساطی | ثبت سفارش از طریق سایت یا پیام‌رسان‌ها',
+    'حمل و نقل سریع و ارسال به تمام نقاط ایران',
+  ];
+  const userBio = publicProfile?.bio || legacyProfile?.bio;
+  const bioLines = userBio ? userBio.split('\n').filter(Boolean) : defaultBioLines;
+
+  // Listings for this profile
+  const profileListings = publicProfile?.listings?.length
+    ? publicProfile.listings
+    : ads.filter((a) => a.authorId === profileId || a.authorName === displayName);
+
+  // 1. Loading State (Full Screen)
   if (loading) {
     return (
-      <div className="pb-24 max-w-md mx-auto space-y-4 animate-pulse p-4">
-        <div className="h-8 bg-zinc-200 rounded-xl w-1/3 mb-4" />
-        <div className="h-36 bg-zinc-200 rounded-3xl" />
-        <div className="h-20 bg-zinc-200 rounded-2xl" />
-        <div className="h-32 bg-zinc-200 rounded-2xl" />
+      <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 space-y-4">
+        <div className="w-12 h-12 rounded-full border-3 border-zinc-200 border-t-orange-600 animate-spin" />
+        <p className="text-xs font-bold text-zinc-500">در حال دریافت اطلاعات پروفایل...</p>
       </div>
     );
   }
 
-  // 2. 404 State
+  // 2. 404 / Not Found State
   if (notFound || (!publicProfile && !legacyProfile)) {
     return (
-      <div className="pb-24 max-w-md mx-auto p-4 text-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+      <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 text-center space-y-4 font-['Vazirmatn',sans-serif]">
+        <div className="w-16 h-16 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center">
           <AlertCircle className="w-8 h-8" />
         </div>
         <h2 className="text-base font-black text-zinc-900">پروفایل یافت نشد</h2>
         <p className="text-xs text-zinc-500">پروفایل مورد نظر وجود ندارد یا غیرفعال شده است.</p>
         <button
           onClick={onBack}
-          className="px-5 py-2 rounded-xl bg-amber-600 text-white text-xs font-bold"
+          className="px-6 py-2.5 rounded-xl bg-orange-600 text-white text-xs font-bold shadow-md hover:bg-orange-700 transition-colors"
         >
           بازگشت به صفحه قبل
         </button>
@@ -167,419 +205,332 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     );
   }
 
-  // Active profile info
-  const isPublicSlice = !!publicProfile;
-  const displayName = publicProfile?.displayName || legacyProfile?.name || 'پروفایل نساجی';
-  const profileType = publicProfile?.profileType || 'ORGANIZATION';
-  const isVerified = publicProfile?.isVerified ?? legacyProfile?.isVerified ?? false;
-  const rating = publicProfile?.rating || legacyProfile?.rating || 5.0;
-  const ratingsCount = publicProfile?.ratingsCount || legacyProfile?.reviewsCount || 0;
-  const avatarUrl = publicProfile?.avatarUrl || legacyProfile?.logo || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&fit=crop';
-  const headerUrl = publicProfile?.headerUrl || legacyProfile?.banner || 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1200&fit=crop';
-  const bio = publicProfile?.bio || legacyProfile?.bio;
-  const workGroup = publicProfile?.workGroup || 'صنعت نساجی و منسوجات';
-  const activityDomain = publicProfile?.activityDomain || legacyProfile?.activity || 'فعالیت تخصصی';
-  const specialties = publicProfile?.specialties || (legacyProfile?.specialty ? [legacyProfile.specialty] : []);
-
-  // Filter listings
-  const profileListings = publicProfile?.listings?.length
-    ? publicProfile.listings
-    : ads.filter((a) => a.authorId === profileId || a.authorName === displayName);
-
   return (
-    <div className="pb-24 max-w-md mx-auto space-y-4">
-      {/* Top Header Bar */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-3 py-2.5 border-b border-zinc-200 flex items-center justify-between">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1 text-xs font-bold text-zinc-700 hover:text-zinc-900"
-        >
-          <ChevronLeft className="w-4 h-4 rotate-180" />
-          <span>بازگشت</span>
-        </button>
-        <span className="text-xs font-black text-zinc-900 truncate max-w-[200px]">
-          {displayName}
-        </span>
-        <button
-          onClick={handleCopyLink}
-          className="p-1.5 rounded-xl hover:bg-zinc-100 text-zinc-600 transition-colors"
-          title="اشتراک‌گذاری پروفایل"
-        >
-          {copiedLink ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {/* 1. Header Banner & Avatar */}
-      <div className="relative">
-        <div className="h-32 sm:h-36 w-full overflow-hidden bg-zinc-900 relative">
-          <img src={headerUrl} alt={displayName} className="w-full h-full object-cover opacity-80" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+    <div className="fixed inset-0 z-50 bg-white overflow-y-auto font-['Vazirmatn',sans-serif] select-none text-right">
+      {/* پیام بازخورد کپی شدن اطلاعات */}
+      {copiedNotification && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-60 bg-zinc-900/90 backdrop-blur-md text-white text-xs font-bold px-4 py-2 rounded-full shadow-2xl animate-in fade-in zoom-in-95">
+          {copiedNotification}
         </div>
+      )}
 
-        <div className="px-4 -mt-10 flex items-end justify-between relative z-10">
-          <div className="relative">
-            <img
-              src={avatarUrl}
-              alt={displayName}
-              className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-md bg-white"
-            />
-            {isVerified && (
-              <span className="absolute -bottom-1 -left-1 bg-amber-500 text-white rounded-full p-1 shadow-sm border-2 border-white">
-                <CheckCircle2 className="w-3.5 h-3.5 fill-white text-amber-600" />
-              </span>
-            )}
-          </div>
+      {/* کانتینر مرکزی متناسب با موبایل و دسکتاپ */}
+      <div className="max-w-md mx-auto bg-white min-h-screen pb-20 relative">
+        {/* ۱. بنر سراسری بالای صفحه (Cover Image) */}
+        <div className="relative w-full h-56 sm:h-64 bg-zinc-100 overflow-hidden">
+          <img
+            src={headerUrl}
+            alt={displayName}
+            className="w-full h-full object-cover"
+          />
 
-          <div className="flex items-center gap-2 pb-1">
-            <button
-              onClick={() => setShowRateModal(true)}
-              className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-all shadow-2xs"
-            >
-              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-              <span>ثبت امتیاز</span>
-            </button>
+          {/* گرادینت تیره ملایم بالا جهت وضوح آیکون‌ها */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/20 pointer-events-none" />
 
-            <button
-              onClick={() => setIsFollowing(!isFollowing)}
-              className={`flex items-center gap-1 text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-2xs ${
-                isFollowing
-                  ? 'bg-zinc-100 text-zinc-800 border border-zinc-300'
-                  : 'bg-zinc-900 hover:bg-zinc-800 text-white'
-              }`}
-            >
-              {isFollowing ? <UserCheck className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-              <span>{isFollowing ? 'دنبال‌شده' : 'دنبال کردن'}</span>
-            </button>
-          </div>
-        </div>
-      </div>
+          {/* دکمه بازگشت در سمت چپ (فلش به سمت راست در زبان فارسی جهت بازگشت) */}
+          <button
+            onClick={onBack}
+            className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-xs flex items-center justify-center text-white transition-colors focus:outline-none z-10"
+            title="بازگشت"
+          >
+            <ArrowRight className="w-5 h-5" />
+          </button>
 
-      {/* 2. Identity & Classification Details */}
-      <div className="px-4 space-y-3">
-        <div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-base font-black text-zinc-900">{displayName}</h1>
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  profileType === 'ORGANIZATION'
-                    ? 'bg-blue-100 text-blue-900'
-                    : 'bg-purple-100 text-purple-900'
-                }`}
+          {/* دکمه منوی همبرگری در سمت راست (دقیقاً مطابق عکس ارسالی) */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-xs flex items-center justify-center text-white transition-colors focus:outline-none z-10"
+            title="منوی گزینه‌ها"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          {/* منوی بازشونده همبرگری */}
+          {isMenuOpen && (
+            <div className="absolute top-14 right-4 z-20 bg-white rounded-2xl shadow-2xl border border-zinc-100 p-1.5 w-44 space-y-1 animate-in fade-in zoom-in-95">
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleShare();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 rounded-xl text-right transition-colors"
               >
-                {profileType === 'ORGANIZATION' ? 'سازمان / مجموعه صنعتی' : 'شخص حقیقی / متخصص'}
-              </span>
+                <Share2 className="w-4 h-4 text-zinc-400" />
+                <span>اشتراک‌گذاری</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  setShowRateModal(true);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 rounded-xl text-right transition-colors"
+              >
+                <Star className="w-4 h-4 text-amber-500" />
+                <span>ثبت امتیاز و ارزیابی</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleCopy(window.location.href, 'لینک صفحه');
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 rounded-xl text-right transition-colors"
+              >
+                <Copy className="w-4 h-4 text-zinc-400" />
+                <span>کپی لینک پروفایل</span>
+              </button>
             </div>
-
-            <div className="flex items-center gap-1 bg-amber-50 text-amber-900 px-2 py-1 rounded-xl text-xs font-bold border border-amber-200">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-              <span>{Number(rating).toFixed(1)}</span>
-              <span className="text-[10px] text-zinc-500">({ratingsCount})</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 mt-1 text-xs text-zinc-600 font-medium">
-            <span className="text-amber-800 font-bold">{workGroup}</span>
-            <span>•</span>
-            <span>{activityDomain}</span>
-            {publicProfile?.yearsActive ? (
-              <>
-                <span>•</span>
-                <span>{publicProfile.yearsActive} سال سابقه</span>
-              </>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Specialties Badges */}
-        <div className="space-y-1">
-          <span className="text-[11px] font-bold text-zinc-500 block">تخصص‌ها و قابلیت‌های فنی:</span>
-          <div className="flex flex-wrap gap-1.5">
-            {specialties.map((s, idx) => (
-              <span
-                key={idx}
-                className="bg-zinc-100 text-zinc-800 text-xs px-2.5 py-0.8 rounded-lg font-medium border border-zinc-200/80"
-              >
-                {s}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Bio */}
-        {bio && (
-          <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-2xs space-y-1.5">
-            <h3 className="text-xs font-bold text-zinc-800">معرفی و سوابق حرفه‌ای:</h3>
-            <p className="text-xs text-zinc-600 leading-relaxed">{bio}</p>
-          </div>
-        )}
-
-        {/* 3. Professional Capacity & Working Conditions */}
-        {publicProfile && (
-          <div className="bg-gradient-to-br from-zinc-50 to-amber-50/40 p-3.5 rounded-2xl border border-zinc-200 shadow-2xs space-y-2.5 text-xs">
-            <h3 className="text-xs font-black text-zinc-900 flex items-center gap-1.5">
-              <Briefcase className="w-4 h-4 text-amber-700" />
-              <span>ظرفیت تولیدی و شرایط همکاری</span>
-            </h3>
-
-            {publicProfile.capacitySummary && (
-              <div className="text-zinc-700 bg-white p-2.5 rounded-xl border border-zinc-200/70">
-                <span className="font-bold text-zinc-900 block mb-0.5">ظرفیت کاری:</span>
-                <span>{publicProfile.capacitySummary}</span>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              {publicProfile.workingHours && (
-                <div className="flex items-center gap-1.5 text-zinc-700">
-                  <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                  <span>ساعات کاری: {publicProfile.workingHours}</span>
-                </div>
-              )}
-
-              {publicProfile.workingDays?.length > 0 && (
-                <div className="flex items-center gap-1.5 text-zinc-700">
-                  <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-                  <span>روزهای کاری: {publicProfile.workingDays.length} روز در هفته</span>
-                </div>
-              )}
-            </div>
-
-            {publicProfile.collaborationModes?.length > 0 && (
-              <div className="pt-1">
-                <span className="text-[11px] font-bold text-zinc-700 block mb-1">مدل‌های همکاری:</span>
-                <div className="flex flex-wrap gap-1">
-                  {publicProfile.collaborationModes.map((mode, i) => (
-                    <span
-                      key={i}
-                      className="bg-amber-100/70 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-md"
-                    >
-                      {mode}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center gap-4 pt-1 border-t border-zinc-200/60 text-[11px] font-medium text-zinc-700">
-              <div className="flex items-center gap-1">
-                <Truck className="w-3.5 h-3.5 text-amber-600" />
-                <span>
-                  {publicProfile.shippingCapability ? 'ارسال بار به سراسر کشور' : 'فقط تحویل درب کارگاه'}
-                </span>
-              </div>
-              {publicProfile.onsiteServiceCapability && (
-                <div className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>امکان اعزام و خدمات در محل</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 4. Direct Communication Channels */}
-        <div className="space-y-1.5 pt-1">
-          <span className="text-xs font-bold text-zinc-800 block">راه‌های ارتباط مستقیم و استعلام:</span>
-          <div className="grid grid-cols-4 gap-2">
-            {(publicProfile?.contacts?.phone || legacyProfile?.contacts?.phone) && (
-              <a
-                href={`tel:${publicProfile?.contacts?.phone || legacyProfile?.contacts?.phone}`}
-                className="p-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold flex flex-col items-center gap-1 hover:bg-blue-100 transition-colors"
-              >
-                <Phone className="w-4 h-4" />
-                <span className="text-[10px]">تلفن ثابت</span>
-              </a>
-            )}
-
-            {(publicProfile?.contacts?.mobile || legacyProfile?.contacts?.mobile) && (
-              <a
-                href={`tel:${publicProfile?.contacts?.mobile || legacyProfile?.contacts?.mobile}`}
-                className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex flex-col items-center gap-1 hover:bg-emerald-100 transition-colors"
-              >
-                <Phone className="w-4 h-4" />
-                <span className="text-[10px]">همراه</span>
-              </a>
-            )}
-
-            {(publicProfile?.contacts?.whatsapp || legacyProfile?.contacts?.whatsapp) && (
-              <a
-                href={`https://wa.me/${publicProfile?.contacts?.whatsapp || legacyProfile?.contacts?.whatsapp}`}
-                target="_blank"
-                rel="noreferrer"
-                className="p-2 rounded-xl bg-green-50 border border-green-200 text-green-700 text-xs font-bold flex flex-col items-center gap-1 hover:bg-green-100 transition-colors"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span className="text-[10px]">واتس‌اپ</span>
-              </a>
-            )}
-
-            {(publicProfile?.contacts?.telegram || legacyProfile?.contacts?.telegram) && (
-              <a
-                href={`https://t.me/${(publicProfile?.contacts?.telegram || legacyProfile?.contacts?.telegram || '').replace('@', '')}`}
-                target="_blank"
-                rel="noreferrer"
-                className="p-2 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 text-xs font-bold flex flex-col items-center gap-1 hover:bg-sky-100 transition-colors"
-              >
-                <Send className="w-4 h-4" />
-                <span className="text-[10px]">تلگرام</span>
-              </a>
-            )}
-          </div>
-
-          {(publicProfile?.website?.url || legacyProfile?.contacts?.website) && (
-            <a
-              href={publicProfile?.website?.url || legacyProfile?.contacts?.website}
-              target="_blank"
-              rel="noreferrer"
-              className="w-full mt-2 p-2.5 rounded-xl bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-800 text-xs font-bold flex items-center justify-between transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-zinc-500" />
-                <span>وب‌سایت رسمی: {publicProfile?.website?.url || legacyProfile?.contacts?.website}</span>
-              </div>
-              <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
-            </a>
           )}
         </div>
 
-        {/* 5. Operational Units & Locations (Clean anti-fake-coordinates) */}
-        {publicProfile?.locations && publicProfile.locations.length > 0 && (
-          <div className="space-y-2 pt-2">
-            <h3 className="text-xs font-black text-zinc-900 flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-amber-700" />
-              <span>واحدهای کاری و موقعیت‌های استقرار</span>
-            </h3>
-
-            <div className="space-y-2">
-              {publicProfile.locations.map((loc) => (
-                <div
-                  key={loc.id}
-                  className="p-3 rounded-2xl bg-white border border-zinc-200 shadow-2xs space-y-1 text-xs"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-zinc-900">{loc.unitTitle}</span>
-                    <div className="flex items-center gap-1.5">
-                      {loc.isPrimary && (
-                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                          واحد اصلی
-                        </span>
-                      )}
-                      {loc.isApproximate && (
-                        <span className="bg-zinc-100 text-zinc-600 text-[10px] px-1.5 py-0.2 rounded-full">
-                          محدوده تقریبی
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-[11px] text-zinc-600">
-                    {loc.province}، {loc.city} {loc.area ? `(${loc.area})` : ''} - {loc.address}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 6. Credentials & Verified Licenses */}
-        {publicProfile?.credentials && publicProfile.credentials.length > 0 && (
-          <div className="space-y-2 pt-2">
-            <h3 className="text-xs font-black text-zinc-900 flex items-center gap-1.5">
-              <Award className="w-4 h-4 text-amber-700" />
-              <span>مدارک، پروانه‌ها و مجوزهای رسمی</span>
-            </h3>
-
-            <div className="space-y-2">
-              {publicProfile.credentials.map((cred) => (
-                <div
-                  key={cred.id}
-                  className="p-3 rounded-2xl bg-white border border-zinc-200 shadow-2xs flex items-start justify-between gap-3 text-xs"
-                >
-                  <div className="flex items-start gap-2.5">
-                    <FileCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-zinc-900">{cred.title}</span>
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                            cred.isOfficiallyVerified
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-zinc-100 text-zinc-600'
-                          }`}
-                        >
-                          {cred.isOfficiallyVerified ? 'تأیید رسمی صنف' : 'خوداظهاری'}
-                        </span>
-                      </div>
-                      {cred.description && (
-                        <p className="text-[11px] text-zinc-500 mt-0.5">{cred.description}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {cred.fileUrl && (
-                    <a
-                      href={cred.fileUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs font-bold text-amber-700 hover:text-amber-900 shrink-0"
-                    >
-                      مشاهده سند
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 7. Current Listings & Operational Offers (Distinction between Profile and Listings) */}
-        <div className="space-y-2 pt-4 border-t border-zinc-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-amber-700" />
-              <h3 className="text-xs font-black text-zinc-900">
-                پیشنهادات و آگهی‌های معاملاتی جاری ({profileListings.length})
-              </h3>
-            </div>
-            <span className="text-[10px] text-zinc-400">پیشنهادات فعال در پلتفرم</span>
+        {/* ۲. بخش هم‌پوشانی آواتار گرد در سمت راست و دکمه «ویرایش پروفایل» در سمت چپ */}
+        <div className="relative px-5 pt-3 flex items-start justify-between">
+          {/* سمت چپ: دکمه و لینک «ویرایش پروفایل» با آیکون مداد دقیقاً طبق عکس ارسالی */}
+          <div className="pt-2">
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-orange-600 hover:text-orange-700 transition-colors focus:outline-none"
+            >
+              <Edit3 className="w-4 h-4 stroke-[2.2]" />
+              <span>ویرایش پروفایل</span>
+            </button>
           </div>
 
-          <div className="space-y-2">
-            {profileListings.map((ad: any) => (
-              <div
-                key={ad.id}
-                onClick={() => onSelectAd(ad)}
-                className="p-3 rounded-2xl bg-white border border-zinc-200 shadow-2xs hover:border-amber-400 transition-all cursor-pointer flex items-center justify-between gap-3"
+          {/* سمت راست: آواتار گرد بزرگ که نصف آن روی بنر قرار می‌گیرد (مطابق عکس) */}
+          <div className="relative -mt-14 shrink-0">
+            <div className="w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden bg-white">
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {isVerified && (
+              <span
+                className="absolute bottom-0 left-0 bg-white rounded-full p-0.5 shadow-xs"
+                title="تأیید هویت شده"
               >
-                <div className="space-y-1">
-                  <h4 className="text-xs font-bold text-zinc-900 line-clamp-1">{ad.title}</h4>
-                  <div className="flex items-center gap-2 text-[10px] text-zinc-500">
-                    <span>{ad.category}</span>
-                    {ad.city && (
-                      <>
-                        <span>•</span>
-                        <span>{ad.city}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <ChevronLeft className="w-4 h-4 text-zinc-400 shrink-0" />
-              </div>
-            ))}
-
-            {profileListings.length === 0 && (
-              <div className="py-8 text-center text-xs text-zinc-400 bg-zinc-50 rounded-2xl">
-                در حال حاضر هیچ آگهی یا پیشنهاد معاملاتی فعالی ثبت نشده است.
-              </div>
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 fill-white" />
+              </span>
             )}
           </div>
         </div>
+
+        {/* ۳. عنوان فروشگاه / کارگاه و زیرعنوان رسته کاری */}
+        <div className="px-5 mt-1 space-y-1">
+          <h1 className="text-base sm:text-lg font-black text-zinc-900 tracking-tight">
+            {displayName}
+          </h1>
+          <p className="text-xs text-zinc-400 font-medium">
+            {workGroup} / {activityDomain}
+          </p>
+
+          {/* ۴. متن‌های معرفی چندخطی (تمیز و بدون کادربندی‌های اضافی) */}
+          <div className="pt-2 space-y-1 text-xs sm:text-[13px] text-zinc-700 leading-relaxed font-normal">
+            {bioLines.map((line, idx) => (
+              <p key={idx} className="block">
+                {line}
+              </p>
+            ))}
+          </div>
+        </div>
+
+        {/* ۵. دو تب افقی سراسری: «درباره ما» و «آگهی‌ها» (دقیقاً مشابه عکس ارسالی) */}
+        <div className="mt-5 border-b border-zinc-200">
+          <div className="grid grid-cols-2 text-center text-sm font-black">
+            {/* تب ۱: درباره ما */}
+            <button
+              onClick={() => setActiveTab('about')}
+              className={`py-2.5 transition-all focus:outline-none relative ${
+                activeTab === 'about'
+                  ? 'text-zinc-900 font-black'
+                  : 'text-zinc-400 hover:text-zinc-600 font-bold'
+              }`}
+            >
+              <span>درباره ما</span>
+              {activeTab === 'about' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-900" />
+              )}
+            </button>
+
+            {/* تب ۲: آگهی‌ها */}
+            <button
+              onClick={() => setActiveTab('listings')}
+              className={`py-2.5 transition-all focus:outline-none relative ${
+                activeTab === 'listings'
+                  ? 'text-zinc-900 font-black'
+                  : 'text-zinc-400 hover:text-zinc-600 font-bold'
+              }`}
+            >
+              <span>آگهی‌ها</span>
+              {activeTab === 'listings' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-900" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* محتوای تب فعال */}
+        {activeTab === 'about' ? (
+          /* ۶. تب «درباره ما» شامل اطلاعات تماس و آیکون‌های شبکه اجتماعی */
+          <div className="p-5 space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-sm sm:text-base font-black text-zinc-900">
+                اطلاعات تماس
+              </h2>
+
+              <div className="space-y-3 text-xs sm:text-sm">
+                {/* وب سایت */}
+                <div className="flex items-center justify-between">
+                  <a
+                    href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#0088cc] hover:underline font-sans text-xs sm:text-sm tracking-wide"
+                  >
+                    {websiteUrl}
+                  </a>
+                  <span className="text-zinc-800 font-semibold">وب سایت</span>
+                </div>
+
+                {/* شماره تلفن ثابت */}
+                <div className="flex items-center justify-between">
+                  <a
+                    href={`tel:${phoneLandline}`}
+                    className="text-orange-600 hover:underline font-sans font-semibold tracking-wider"
+                  >
+                    {phoneLandline}
+                  </a>
+                  <span className="text-zinc-800 font-semibold">شماره تلفن</span>
+                </div>
+
+                {/* شماره موبایل */}
+                <div className="flex items-center justify-between">
+                  <a
+                    href={`tel:${mobilePhone}`}
+                    className="text-orange-600 hover:underline font-sans font-semibold tracking-wider"
+                  >
+                    {mobilePhone}
+                  </a>
+                  <span className="text-zinc-800 font-semibold">شماره موبایل</span>
+                </div>
+              </div>
+            </div>
+
+            {/* موقعیت مکانی کارگاه و ابزار مسیریابی جی‌پی‌اس */}
+            <div className="pt-2">
+              <MiniMapWidget
+                title={displayName}
+                addressText={legacyProfile?.location?.address || `${publicProfile?.city || 'تهران'}، بازار بزرگ، سرای فردوس، طبقه ۲`}
+                lat={legacyProfile?.location?.lat || 35.6892}
+                lng={legacyProfile?.location?.lng || 51.3890}
+                areaName={legacyProfile?.location?.city || publicProfile?.city || 'تهران'}
+              />
+            </div>
+
+            {/* آیکون‌های شبکه‌های اجتماعی در پایین صفحه (اینستاگرام، واتس‌اپ، تلگرام مطابق عکس) */}
+            <div className="pt-6 flex items-center justify-center gap-4">
+              {/* اینستاگرام (آیکون گرد گرادینت رنگی) */}
+              <a
+                href={`https://instagram.com/${instagramHandle}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-transform"
+                title="اینستاگرام"
+              >
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+              </a>
+
+              {/* واتس‌اپ (آیکون گرد سبز) */}
+              <a
+                href={`https://wa.me/${whatsappNumber}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-11 h-11 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-transform"
+                title="واتس‌اپ"
+              >
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                </svg>
+              </a>
+
+              {/* تلگرام (آیکون گرد آبی) */}
+              <a
+                href={`https://t.me/${telegramHandle.replace('@', '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-11 h-11 rounded-full bg-[#0088cc] text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-transform"
+                title="تلگرام"
+              >
+                <Send className="w-5 h-5 -rotate-45" />
+              </a>
+            </div>
+          </div>
+        ) : (
+          /* ۷. تب «آگهی‌ها»: گرید یکدست ۳ در ۳ مربع مشابه اکسپلور */
+          <div className="pt-2 px-0.5">
+            {profileListings.length === 0 ? (
+              <div className="py-16 px-4 text-center space-y-3 text-zinc-400">
+                <Layers className="w-10 h-10 mx-auto text-zinc-300 stroke-[1.5]" />
+                <p className="text-xs font-bold text-zinc-600">هنوز آگهی فعالی ثبت نشده است.</p>
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-bold transition-colors"
+                >
+                  ویرایش و ثبت اطلاعات جدید
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-0.5 sm:gap-1">
+                {profileListings.map((ad: any, idx: number) => {
+                  const coverUrl = ad.images?.[0] || 'https://images.unsplash.com/photo-1528458876861-544fd1761a91?auto=format&fit=crop&w=600&q=80';
+                  const isMulti = ad.images?.length > 1;
+
+                  return (
+                    <button
+                      key={ad.id || idx}
+                      onClick={() => onSelectAd(ad)}
+                      className="relative aspect-square overflow-hidden bg-zinc-100 group focus:outline-none select-none active:opacity-85"
+                    >
+                      <img
+                        src={coverUrl}
+                        alt={ad.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                      />
+
+                      {/* آیکون ظریف چندتصویری در گوشه بالا چپ */}
+                      {isMulti && (
+                        <div className="absolute top-1.5 left-1.5 text-white drop-shadow-md pointer-events-none">
+                          <Copy className="w-3.5 h-3.5 fill-white stroke-none" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* RATING MODAL */}
+      {/* مودال ویرایش پروفایل */}
+      {isEditModalOpen && (
+        <ProfileEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onProfileUpdated={(updated) => {
+            fetchProfileData();
+            setIsEditModalOpen(false);
+            showToast('اطلاعات پروفایل با موفقیت به‌روزرسانی شد');
+          }}
+        />
+      )}
+
+      {/* مودال ثبت امتیاز و ارزیابی */}
       {showRateModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4 border border-zinc-200">
             <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
               <h3 className="text-xs font-black text-zinc-900 flex items-center gap-1.5">
@@ -601,13 +552,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </div>
             ) : (
               <div className="space-y-3">
-                {rateError && (
-                  <div className="p-2.5 rounded-xl bg-rose-50 text-rose-800 text-xs flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span>{rateError}</span>
-                  </div>
-                )}
-
                 <div>
                   <label className="block text-[11px] font-bold text-zinc-700 mb-1">
                     نوع تعامل و همکاری کاری *
@@ -650,25 +594,22 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
                 <div>
                   <label className="block text-[11px] font-bold text-zinc-700 mb-1">
-                    توضیحات و بازخورد محرمانه (اختیاری)
+                    توضیحات و بازخورد (اختیاری)
                   </label>
                   <textarea
                     rows={3}
                     value={rateRationale}
                     onChange={(e) => setRateRationale(e.target.value)}
-                    placeholder="کیفیت خدمات، تعهد به زمان تحویل یا توضیحات..."
+                    placeholder="کیفیت منسوجات، دقت دوخت، تعهد زمان تحویل..."
                     className="w-full text-xs p-2.5 rounded-xl border border-zinc-200 outline-none resize-none"
                   />
-                  <span className="text-[10px] text-zinc-400">
-                    توضیحات شما محرمانه ذخیره شده و در صفحه عمومی نمایش داده نمی‌شود.
-                  </span>
                 </div>
 
                 <button
                   type="button"
                   disabled={submittingRate}
                   onClick={handleRateSubmit}
-                  className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
+                  className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
                 >
                   {submittingRate ? 'در حال ثبت...' : 'تأیید و ثبت امتیاز'}
                 </button>

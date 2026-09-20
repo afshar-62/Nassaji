@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
-import { X, Upload, Check, MapPin, Tag, Plus } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { X, Upload, Check, MapPin, Tag, Plus, Globe } from 'lucide-react';
 import { AdItem } from '../types';
-import { TOP_CATEGORIES, CITIES_LIST } from '../data/mockData';
+import { TOP_CATEGORIES } from '../data/mockData';
+import {
+  SUPPORTED_COUNTRIES,
+  IRAN_PROVINCES,
+  getCitiesByProvince,
+} from '../data/locationsData';
 
 interface CreateAdModalProps {
   onClose: () => void;
@@ -12,6 +17,8 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({ onClose, onSubmitA
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState(TOP_CATEGORIES[0].title);
+  const [country, setCountry] = useState('ایران');
+  const [province, setProvince] = useState('تهران');
   const [city, setCity] = useState('تهران');
   const [price, setPrice] = useState('');
   const [mobile, setMobile] = useState('');
@@ -20,6 +27,19 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({ onClose, onSubmitA
   const [images, setImages] = useState<string[]>([
     'https://images.unsplash.com/photo-1528458876861-544fd1761a91?auto=format&fit=crop&w=900&q=80',
   ]);
+
+  // شهرهای استان انتخاب شده
+  const availableCities = useMemo(() => {
+    return getCitiesByProvince(province);
+  }, [province]);
+
+  const handleProvinceChange = (newProvinceName: string) => {
+    setProvince(newProvinceName);
+    const citiesOfProv = getCitiesByProvince(newProvinceName);
+    if (citiesOfProv.length > 0) {
+      setCity(citiesOfProv[0].name);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +53,7 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({ onClose, onSubmitA
       title: title.trim(),
       description: description.trim(),
       city: city,
-      province: city === 'تهران' ? 'تهران' : city === 'اصفهان' ? 'اصفهان' : 'خراسان',
+      province: province,
       category: category,
       authorId: 'user-1',
       authorName: 'تولیدی صنعتی پارس دوخت (شما)',
@@ -122,36 +142,82 @@ export const CreateAdModal: React.FC<CreateAdModalProps> = ({ onClose, onSubmitA
             />
           </div>
 
-          {/* Category & City */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="font-bold text-zinc-800 block mb-1">دسته‌بندی:</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full p-2.5 rounded-xl border border-zinc-200 bg-white"
-              >
-                {TOP_CATEGORIES.map((c) => (
-                  <option key={c.id} value={c.title}>
-                    {c.title}
-                  </option>
-                ))}
-              </select>
+          {/* Category */}
+          <div>
+            <label className="font-bold text-zinc-800 block mb-1">دسته‌بندی تخصصی نساجی:</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full p-2.5 rounded-xl border border-zinc-200 bg-white text-xs font-semibold"
+            >
+              {TOP_CATEGORIES.map((c) => (
+                <option key={c.id} value={c.title}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Hierarchical Location (Country > Province > City) */}
+          <div className="p-3 bg-zinc-50/80 rounded-2xl border border-zinc-200/80 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                <span>موقعیت مکانی واحد صنفی یا کارگاه:</span>
+              </span>
+              <span className="text-[10px] text-zinc-500">
+                {country} / {province} / {city}
+              </span>
             </div>
 
-            <div>
-              <label className="font-bold text-zinc-800 block mb-1">شهر کارگاه:</label>
-              <select
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="w-full p-2.5 rounded-xl border border-zinc-200 bg-white"
-              >
-                {CITIES_LIST.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {/* Country */}
+              <div>
+                <label className="text-[11px] font-bold text-zinc-600 block mb-1">کشور:</label>
+                <select
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="w-full p-2 rounded-xl border border-zinc-200 bg-white text-xs font-semibold"
+                >
+                  {SUPPORTED_COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.name} disabled={!c.isDefault}>
+                      {c.flagEmoji} {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Province */}
+              <div>
+                <label className="text-[11px] font-bold text-zinc-600 block mb-1">استان:</label>
+                <select
+                  value={province}
+                  onChange={(e) => handleProvinceChange(e.target.value)}
+                  className="w-full p-2 rounded-xl border border-zinc-200 bg-white text-xs font-semibold"
+                >
+                  {IRAN_PROVINCES.map((p) => (
+                    <option key={p.id} value={p.name}>
+                      استان {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* City */}
+              <div>
+                <label className="text-[11px] font-bold text-zinc-600 block mb-1">شهر:</label>
+                <select
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="w-full p-2 rounded-xl border border-zinc-200 bg-white text-xs font-semibold"
+                >
+                  {availableCities.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name} {c.isIndustrialHub ? '★' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 

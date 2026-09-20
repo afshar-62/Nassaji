@@ -110,8 +110,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-100 text-zinc-900 font-['Vazirmatn',sans-serif] selection:bg-amber-500 selection:text-white">
-      {/* Top Header - Shown on Home, Explore, and Map */}
-      {!selectedProfileId && (
+      {/* Top Header - Shown on Home and Explore */}
+      {!selectedProfileId && currentTab !== 'map' && (
         <Header
           selectedCity={selectedCity}
           onSelectCity={setSelectedCity}

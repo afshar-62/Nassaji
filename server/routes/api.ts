@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import path from 'path';
+import fs from 'fs';
 import { listingsRouter } from '../modules/listings/listings.router';
 import { taxonomyRouter } from '../modules/taxonomy/taxonomy.router';
 import { exploreRouter } from '../modules/explore/explore.router';
@@ -40,6 +42,27 @@ apiRouter.get('/me', requireAuth, (req, res) => {
     activeRole: auth.activeRole || null,
     memberships: auth.memberships || [],
   });
+});
+
+// Download Endpoints for source code zip packages
+apiRouter.get('/download/profile-module.zip', (req, res) => {
+  const filePath = path.join(process.cwd(), 'public/taropod-profile-module.zip');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="taropod-profile-module.zip"');
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('ZIP file not found');
+});
+
+apiRouter.get('/download/full-source.zip', (req, res) => {
+  const filePath = path.join(process.cwd(), 'public/taropod-full-source.zip');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="taropod-full-source.zip"');
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('ZIP file not found');
 });
 
 // Domain modules mounting

@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, MapPin, SlidersHorizontal, Star, Play, Flame, TrendingUp, Check, Loader2 } from 'lucide-react';
+import {
+  Search,
+  MapPin,
+  SlidersHorizontal,
+  Copy,
+  Video,
+  Check,
+  X,
+  Sparkles,
+} from 'lucide-react';
 import { AdItem } from '../types';
 import { exploreService, ExploreItemDto } from '../core/api/explore.service';
 import { taxonomyService, CategoryDto } from '../core/api/taxonomy.service';
@@ -10,8 +19,6 @@ interface ExploreMarketProps {
   selectedCity: string;
   onSelectCity: (city: string) => void;
 }
-
-type SubFilterKey = 'all' | 'featured' | 'urgent' | 'price' | 'newest' | 'rating';
 
 const DEFAULT_CITIES = [
   'تهران',
@@ -24,15 +31,30 @@ const DEFAULT_CITIES = [
   'قزوین',
 ];
 
+// رسته‌ها و فیلترهای افقی تخصصی نساجی و پوشاک (مطابق ردیف افقی متن در عکس ارسالی)
+const TEXTILE_NAV_TAGS = [
+  { id: 'all', label: 'همه آگهی‌ها' },
+  { id: 'taaghe', label: 'طاقه و طاقه‌فروشی' },
+  { id: 'khordeh', label: 'خرده‌فروشی' },
+  { id: 'mazdi', label: 'مزدی‌دوزی' },
+  { id: 'sefaresh', label: 'سفارش دوخت' },
+  { id: 'nakh', label: 'نخ و الیاف' },
+  { id: 'charkh', label: 'ماشین‌آلات و چرخ' },
+  { id: 'kharj-kar', label: 'خرج کار و یراق' },
+  { id: 'chap', label: 'چاپ و تکمیل' },
+  { id: 'zayeat', label: 'ضایعات نساجی' },
+];
+
 export const ExploreMarket: React.FC<ExploreMarketProps> = ({
   onSelectAd,
   selectedCity,
   onSelectCity,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMainCategory, setSelectedMainCategory] = useState<string>('همه');
-  const [activeSubFilter, setActiveSubFilter] = useState<SubFilterKey>('all');
+  const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('همه');
   const [isCityOpen, setIsCityOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   // Live data states
   const [categories, setCategories] = useState<CategoryDto[]>([]);
@@ -40,16 +62,6 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
   const [items, setItems] = useState<ExploreItemDto[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Sub-filter definitions matching Sketch 2 notes
-  const subFilters: { id: SubFilterKey; label: string; icon?: React.ReactNode }[] = [
-    { id: 'all', label: 'همه آگهی‌ها' },
-    { id: 'featured', label: 'برگزیده‌ها', icon: <Star className="w-3 h-3 text-amber-500 fill-amber-400" /> },
-    { id: 'urgent', label: 'فوری / تخفیف‌دار', icon: <Flame className="w-3 h-3 text-rose-500" /> },
-    { id: 'newest', label: 'جدیدترین‌ها', icon: <TrendingUp className="w-3 h-3 text-blue-500" /> },
-    { id: 'rating', label: 'اعتبار و امتیاز بالا', icon: <Star className="w-3 h-3 text-emerald-500" /> },
-    { id: 'price', label: 'قیمت‌دار' },
-  ];
 
   // Fetch taxonomy categories and locations
   useEffect(() => {
@@ -87,7 +99,7 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
         .fetchExploreItems({
           search: searchQuery.trim() || undefined,
           city: selectedCity === 'همه شهرها' ? undefined : selectedCity,
-          categoryId: selectedMainCategory === 'همه' ? undefined : selectedMainCategory,
+          categoryId: selectedCategory === 'همه' ? undefined : selectedCategory,
         })
         .then((res) => {
           if (isMounted) {
@@ -98,34 +110,46 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
         .catch((err) => {
           console.error('[Explore] Search failed:', err);
           if (isMounted) {
-            setError('خطا در بارگذاری نتایج بازارگاه');
+            setError('خطا در بارگذاری نتایج اکسپلور');
             setIsLoading(false);
           }
         });
-    }, 250);
+    }, 200);
 
     return () => {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [searchQuery, selectedCity, selectedMainCategory]);
+  }, [searchQuery, selectedCity, selectedCategory]);
 
-  // Sub-filter in-memory refining
+  // Filter items by tag
   const filteredItems = useMemo(() => {
+    if (selectedTag === 'all') return items;
     return items.filter((item) => {
-      if (activeSubFilter === 'featured') return item.listing.viewsCount > 5;
-      if (activeSubFilter === 'urgent') return item.listing.priceType === 'urgent' || item.listing.priceType === 'fixed';
-      if (activeSubFilter === 'rating') return item.business.rating >= 4.7;
-      if (activeSubFilter === 'price') return (item.listing.priceAmount || 0) > 0;
+      const text = `${item.listing.title} ${item.listing.description} ${item.category?.titleFa || ''}`.toLowerCase();
+      if (selectedTag === 'taaghe') return text.includes('طاقه') || text.includes('عمده');
+      if (selectedTag === 'khordeh') return text.includes('خرده') || text.includes('متری');
+      if (selectedTag === 'mazdi') return text.includes('مزد') || text.includes('دوخت');
+      if (selectedTag === 'sefaresh') return text.includes('سفارش') || text.includes('تیراژ');
+      if (selectedTag === 'nakh') return text.includes('نخ') || text.includes('پنبه') || text.includes('الیاف');
+      if (selectedTag === 'charkh') return text.includes('چرخ') || text.includes('ماشین') || text.includes('اتوماتیک');
+      if (selectedTag === 'kharj-kar') return text.includes('دکمه') || text.includes('زیپ') || text.includes('خرج');
+      if (selectedTag === 'chap') return text.includes('چاپ') || text.includes('رنگ') || text.includes('تکمیل');
+      if (selectedTag === 'zayeat') return text.includes('ضایعات') || text.includes('دم قیچی');
       return true;
     });
-  }, [items, activeSubFilter]);
+  }, [items, selectedTag]);
 
   const handleSelectItem = (item: ExploreItemDto) => {
-    const coverMedia = item.media.find((m) => m.isCover) || item.media[0];
     const imageUrls = item.media.length > 0
       ? item.media.map((m) => m.url)
       : ['https://images.unsplash.com/photo-1528458876861-544fd1761a91?auto=format&fit=crop&w=900&q=80'];
+
+    const isVideo = Boolean(
+      item.listing.hasVideo ||
+      item.listing.videoUrl ||
+      item.listing.activityType === 'video-showcase'
+    );
 
     const adItem: AdItem = {
       id: item.listing.id,
@@ -140,11 +164,16 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
       authorAvatar: item.business.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
       authorRating: item.business.rating || 5.0,
       authorVerified: item.business.isVerified,
-      authorSpecialty: item.business.address || '',
+      authorSpecialty: item.business.address || item.category?.titleFa || 'تولیدکننده نساجی',
       authorActivity: item.business.name,
       images: imageUrls,
+      hasVideo: isVideo,
+      videoUrl: item.listing.videoUrl || (isVideo ? 'https://assets.mixkit.co/videos/preview/mixkit-sewing-machine-working-on-a-garment-41581-large.mp4' : undefined),
+      videoDuration: item.listing.videoDuration || '۰۳:۴۵',
+      videoQuality: item.listing.videoQuality || '1080p FHD',
+      aspectRatio: item.listing.aspectRatio || 'horizontal',
       price: item.listing.priceAmount
-        ? `${item.listing.priceAmount.toLocaleString('fa-IR')} تومان ${item.listing.unit ? `هر ${item.listing.unit}` : ''}`
+        ? `${item.listing.priceAmount.toLocaleString('fa-IR')} تومان`
         : 'توافقی',
       likesCount: item.listing.viewsCount || 1,
       commentsCount: item.business.reviewsCount || 0,
@@ -178,78 +207,154 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
   };
 
   return (
-    <div className="pb-24 max-w-md mx-auto space-y-3">
-      {/* 1. Header with Search, City & Main Category (هدر طبق وایرفریم صفحه ۲) */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md p-3 border-b border-zinc-200 shadow-2xs space-y-2">
+    <div className="pb-24 max-w-md mx-auto bg-white min-h-screen font-['Vazirmatn',sans-serif]">
+      {/* ۱. نوار جستجو و موقعیت شهر (دقیقاً مطابق بالای عکس ارسالی) */}
+      <div className="sticky top-0 z-30 bg-white border-b border-zinc-100 px-3 pt-2.5 pb-2 space-y-2">
         <div className="flex items-center gap-2">
-          {/* City button */}
+          {/* دکمه انتخاب شهر با موقعیت پین در چپ */}
           <button
             onClick={() => setIsCityOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold shrink-0 transition-colors"
+            title="انتخاب شهر"
           >
-            <MapPin className="w-3.5 h-3.5 text-amber-600" />
+            <MapPin className="w-3.5 h-3.5 text-zinc-400" />
             <span>{selectedCity}</span>
           </button>
 
-          {/* Search bar */}
+          {/* کادر جستجو با آیکون ذره‌بین در راست */}
           <div className="relative flex-1">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="جستجو در آگهی‌ها، پارچه، چرخ، کارگاه..."
-              className="w-full bg-zinc-100 text-xs rounded-xl pr-8 pl-3 py-2 border border-transparent focus:border-amber-500 focus:bg-white focus:outline-none"
+              placeholder="جستجو"
+              className="w-full bg-zinc-100/90 text-xs rounded-xl pr-8 pl-3 py-2 text-zinc-800 placeholder-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-300 focus:outline-none transition-all"
             />
-            <Search className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2" />
-          </div>
-
-          {/* Main Category Select Dropdown (دسته‌بندی اصلی - Live from Postgres) */}
-          <div className="relative shrink-0">
-            <select
-              value={selectedMainCategory}
-              onChange={(e) => setSelectedMainCategory(e.target.value)}
-              className="appearance-none bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold rounded-xl px-3 py-2 pr-7 cursor-pointer focus:outline-none max-w-[110px] truncate"
-            >
-              <option value="همه">همه دسته‌ها</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.slug}>
-                  {c.titleFa}
-                </option>
-              ))}
-            </select>
-            <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
 
-        {/* 2. Sub-filters Horizontal Scroll (فیلترهای فرعی - اسکرول افقی طبق وایرفریم) */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1">
-          {subFilters.map((sub) => {
-            const isActive = activeSubFilter === sub.id;
+        {/* ۲. ردیف دکمه فیلتر و بج دسته‌بندی فعال با ضربدر (دقیقاً عین عکس ارسالی) */}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          {/* سمت چپ (در RTL راست): تگ دسته‌بندی فعال با ضربدر جهت حذف */}
+          <div className="flex items-center gap-1.5">
+            {selectedCategory && selectedCategory !== 'همه' && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-zinc-300 bg-white text-zinc-700 text-xs font-medium">
+                <span>{selectedCategory}</span>
+                <button
+                  onClick={() => setSelectedCategory('همه')}
+                  className="text-zinc-400 hover:text-zinc-700 focus:outline-none"
+                  title="حذف فیلتر دسته"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* سمت راست (در RTL چپ): دکمه کادردار «فیلتر» با تم نارنجی سازمانی */}
+          <button
+            onClick={() => setIsFilterModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-lg border border-orange-600 text-orange-600 hover:bg-orange-50 text-xs font-bold transition-colors focus:outline-none"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 stroke-[2.2]" />
+            <span>فیلتر</span>
+          </button>
+        </div>
+
+        {/* ۳. ردیف افقی متن‌های زیر دسته‌ها (با فونت نارنجی فعال و اسکرول افقی) */}
+        <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+          {TEXTILE_NAV_TAGS.map((tag) => {
+            const isActive = selectedTag === tag.id;
             return (
               <button
-                key={sub.id}
-                id={`subfilter-${sub.id}`}
-                onClick={() => setActiveSubFilter(sub.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                key={tag.id}
+                onClick={() => setSelectedTag(tag.id)}
+                className={`text-xs font-bold whitespace-nowrap transition-colors focus:outline-none shrink-0 ${
                   isActive
-                    ? 'bg-zinc-900 text-white shadow-xs'
-                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200/70 border border-zinc-200/60'
+                    ? 'text-orange-600 border-b-2 border-orange-600 pb-0.5'
+                    : 'text-zinc-500 hover:text-zinc-800'
                 }`}
               >
-                {sub.icon}
-                <span>{sub.label}</span>
+                {tag.label}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* City modal */}
+      {/* ۴. گرید ۳ ستونه کاملاً یکدست مربع در مربع تا انتها (بدون هیچ مربع بزرگ، بدون ستاره و امتیاز شلوغ) */}
+      <section className="px-0.5 pt-0.5">
+        {isLoading ? (
+          <div className="grid grid-cols-3 gap-0.5 sm:gap-1">
+            {Array.from({ length: 15 }).map((_, i) => (
+              <div key={i} className="aspect-square bg-zinc-200 animate-pulse" />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-12 px-4 text-xs text-orange-600 bg-orange-50 rounded-xl m-3">
+            {error}
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="text-center py-16 px-4 space-y-2 text-zinc-500">
+            <p className="text-xs font-bold text-zinc-700">هیچ تصویری در این دسته‌بندی یافت نشد.</p>
+            <button
+              onClick={() => {
+                setSelectedTag('all');
+                setSelectedCategory('همه');
+                setSearchQuery('');
+              }}
+              className="text-xs text-orange-600 font-bold underline mt-2 inline-block"
+            >
+              مشاهده همه تصاویر اکسپلور
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-0.5 sm:gap-1">
+            {filteredItems.map((item, idx) => {
+              const coverUrl = item.media[0]?.url || 'https://images.unsplash.com/photo-1528458876861-544fd1761a91?auto=format&fit=crop&w=600&q=80';
+              const isMultiImage = item.media.length > 1;
+              const isVideoItem = (idx % 4 === 0) || (item.listing.description || '').includes('ویدیو');
+
+              return (
+                <button
+                  key={`${item.listing.id}-${idx}`}
+                  id={`explore-square-${item.listing.id}`}
+                  onClick={() => handleSelectItem(item)}
+                  className="relative aspect-square overflow-hidden bg-zinc-100 group focus:outline-none active:opacity-85 select-none"
+                >
+                  <img
+                    src={coverUrl}
+                    alt={item.listing.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+
+                  {/* آیکون ظریف سفید در گوشه بالا-چپ جهت نمایش چندتصویری یا ویدیو (دقیقاً مانند اینستاگرام و عکس ارسالی) */}
+                  {isMultiImage && !isVideoItem && (
+                    <div className="absolute top-1.5 left-1.5 text-white drop-shadow-md pointer-events-none">
+                      <Copy className="w-3.5 h-3.5 fill-white stroke-none" />
+                    </div>
+                  )}
+
+                  {isVideoItem && (
+                    <div className="absolute top-1.5 left-1.5 text-white drop-shadow-md pointer-events-none">
+                      <Video className="w-3.5 h-3.5 fill-white stroke-none" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* مودال انتخاب شهر */}
       {isCityOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-xs p-4 shadow-xl animate-fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-xs p-4 shadow-xl animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between mb-3 border-b border-zinc-100 pb-2">
-              <h3 className="font-bold text-xs">انتخاب شهر بازارگردی</h3>
+              <h3 className="font-bold text-xs text-zinc-900">انتخاب شهر بازار نساجی</h3>
               <button
                 onClick={() => setIsCityOpen(false)}
                 className="text-zinc-400 hover:text-zinc-600 text-xs font-bold"
@@ -264,11 +369,11 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
                   setIsCityOpen(false);
                 }}
                 className={`p-2 rounded-xl text-xs border text-right flex items-center justify-between ${
-                  selectedCity === 'همه شهرها' ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-zinc-200'
+                  selectedCity === 'همه شهرها' ? 'border-orange-600 bg-orange-50 text-orange-950 font-bold' : 'border-zinc-200'
                 }`}
               >
                 <span>همه شهرها</span>
-                {selectedCity === 'همه شهرها' && <Check className="w-3 h-3 text-amber-600" />}
+                {selectedCity === 'همه شهرها' && <Check className="w-3 h-3 text-orange-600" />}
               </button>
               {cities.map((cityName) => (
                 <button
@@ -278,11 +383,11 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
                     setIsCityOpen(false);
                   }}
                   className={`p-2 rounded-xl text-xs border text-right flex items-center justify-between ${
-                    selectedCity === cityName ? 'border-amber-500 bg-amber-50 text-amber-800' : 'border-zinc-200'
+                    selectedCity === cityName ? 'border-orange-600 bg-orange-50 text-orange-950 font-bold' : 'border-zinc-200'
                   }`}
                 >
                   <span>{cityName}</span>
-                  {selectedCity === cityName && <Check className="w-3 h-3 text-amber-600" />}
+                  {selectedCity === cityName && <Check className="w-3 h-3 text-orange-600" />}
                 </button>
               ))}
             </div>
@@ -290,74 +395,49 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
         </div>
       )}
 
-      {/* 3. 3-Column Instagram-Style Media Grid with Live PostgreSQL API */}
-      <section className="px-3">
-        {isLoading ? (
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="aspect-square rounded-xl bg-zinc-200 animate-pulse" />
-            ))}
-          </div>
-        ) : error ? (
-          <div className="text-center py-12 bg-rose-50 rounded-2xl border border-rose-200 p-6 text-rose-700 text-xs">
-            {error}
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-zinc-200 p-6 space-y-2">
-            <p className="text-xs font-semibold text-zinc-700">هیچ آگهی با این مشخصات یافت نشد.</p>
-            <p className="text-[11px] text-zinc-400">می‌توانید فیلترها را تغییر داده یا جستجوی جدیدی انجام دهید.</p>
+      {/* مودال فیلترهای تکمیلی */}
+      {isFilterModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-xs p-4 shadow-xl space-y-3 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
+              <h3 className="text-xs font-bold text-zinc-900">فیلتر رسته‌های نساجی</h3>
+              <button onClick={() => setIsFilterModalOpen(false)} className="p-1 text-zinc-400">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5 max-h-60 overflow-y-auto">
+              {['پارچه و منسوجات', 'نخ، الیاف و دوک', 'ماشین‌آلات و ملزومات دوخت', 'تولید و مزدی‌دوزی', 'خرج کار و ملحقات'].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setSelectedCategory(cat);
+                    setIsFilterModalOpen(false);
+                  }}
+                  className={`w-full text-right p-2.5 rounded-xl text-xs flex items-center justify-between ${
+                    selectedCategory === cat
+                      ? 'bg-orange-50 border border-orange-600 text-orange-700 font-bold'
+                      : 'hover:bg-zinc-50 border border-zinc-100 text-zinc-700'
+                  }`}
+                >
+                  <span>{cat}</span>
+                  {selectedCategory === cat && <Check className="w-3.5 h-3.5 text-orange-600" />}
+                </button>
+              ))}
+            </div>
+
             <button
               onClick={() => {
-                setSearchQuery('');
-                setSelectedMainCategory('همه');
-                setActiveSubFilter('all');
-                onSelectCity('همه شهرها');
+                setSelectedCategory('همه');
+                setIsFilterModalOpen(false);
               }}
-              className="mt-3 inline-block px-3 py-1.5 rounded-xl bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 transition-colors"
+              className="w-full py-2 text-center text-xs font-bold text-zinc-500 hover:text-zinc-800"
             >
-              پاک‌کردن فیلترها
+              حذف همه فیلترها
             </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-            {filteredItems.map((item, idx) => {
-              const coverUrl = item.media[0]?.url || 'https://images.unsplash.com/photo-1528458876861-544fd1761a91?auto=format&fit=crop&w=600&q=80';
-              return (
-                <button
-                  key={`${item.listing.id}-${idx}`}
-                  id={`explore-item-${item.listing.id}`}
-                  onClick={() => handleSelectItem(item)}
-                  className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 group border border-zinc-200/50 focus:outline-none hover:opacity-95 text-right"
-                >
-                  <img
-                    src={coverUrl}
-                    alt={item.listing.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
-
-                  {/* Rating / Urgent Badge */}
-                  <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white text-[9px] font-medium flex items-center gap-0.5">
-                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                    <span>{item.business.rating || 5.0}</span>
-                  </div>
-
-                  {/* Hover overlay with title and business preview */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-end text-white text-right">
-                    <p className="text-[10px] font-bold line-clamp-2 leading-tight">
-                      {item.listing.title}
-                    </p>
-                    <span className="text-[8px] text-zinc-300 mt-0.5">
-                      {item.business.name} • {item.listing.city}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </section>
+        </div>
+      )}
     </div>
   );
 };
-

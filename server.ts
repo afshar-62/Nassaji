@@ -3,6 +3,7 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { requestContextMiddleware } from './server/middleware/context.ts';
 import { authContextMiddleware, ensureSeedContext } from './server/middleware/auth.ts';
+import { seedTextileMarketData } from './server/seed/textileMarketSeed.ts';
 import { apiRouter } from './server/routes/api.ts';
 
 async function startServer() {
@@ -22,7 +23,8 @@ async function startServer() {
   // Initialize DB seed actors and attach Auth Context & Membership middleware
   try {
     await ensureSeedContext();
-    console.log('[TAROPOD] Database seed actors and business memberships initialized successfully.');
+    await seedTextileMarketData();
+    console.log('[TAROPOD] Database seed actors and 20 business profiles initialized successfully.');
   } catch (err) {
     console.warn('[TAROPOD] Warning: Could not initialize seed context on startup (may be waiting for DB proxy):', err);
   }
@@ -30,6 +32,12 @@ async function startServer() {
 
   // Core API Boundary: Versioned domain routes (/api/v1)
   app.use('/api/v1', apiRouter);
+
+  // Direct source download page & public static assets
+  app.get('/download', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public/download.html'));
+  });
+  app.use('/public', express.static(path.join(process.cwd(), 'public')));
 
   // Vite middleware for development vs Static serving for production
   if (process.env.NODE_ENV !== 'production') {

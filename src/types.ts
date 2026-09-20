@@ -18,6 +18,9 @@ export interface AdItem {
   images: string[];
   hasVideo?: boolean;
   videoUrl?: string;
+  aspectRatio?: 'vertical' | 'horizontal' | 'square';
+  videoDuration?: string; // e.g. '03:45' (up to 10 min max)
+  videoQuality?: string; // e.g. '1080p FHD'
   createdAtText: string;
   likesCount: number;
   commentsCount: number;
@@ -110,3 +113,20 @@ export interface CategoryItem {
   icon: string;
   count?: number;
 }
+
+export interface StoryItem {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  category: string;
+  mediaType: 'video' | 'image';
+  mediaUrl: string;
+  aspectRatio: 'vertical' | 'horizontal';
+  durationSeconds?: number;
+  timeAgo: string;
+  isVerified?: boolean;
+  caption?: string;
+  linkAdId?: string;
+}
+
