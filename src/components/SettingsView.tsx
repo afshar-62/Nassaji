@@ -363,27 +363,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </p>
 
         <div className="space-y-2">
-          {/* دکمه دانلود مستقیم فایل ZIP */}
-          <DownloadSourceButton label="دانلود فوری فایل ZIP سورس‌کد (کلیک کنید)" />
+          {/* دکمه دانلود سریع فایل ZIP کدها */}
+          <DownloadSourceButton label="دانلود فوری ZIP سورس‌کد خالص (۴۷۵KB)" />
 
           <div className="grid grid-cols-2 gap-2">
             <a
-              href="/taropod_source_bundle.txt"
-              download="taropod_source_code.txt"
-              className="p-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+              href="/taropod-full-source.zip"
+              download="taropod-full-source.zip"
+              className="p-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-xs transition-colors"
             >
-              <Download className="w-3.5 h-3.5 text-zinc-300" />
-              <span>دانلود فایل متنی کدها (.txt)</span>
+              <Download className="w-3.5 h-3.5 text-orange-200" />
+              <span>بسته کامل با تصاویر (18MB)</span>
             </a>
 
             <a
-              href="/source-viewer.html"
+              href="/download"
               target="_blank"
               rel="noreferrer"
               className="p-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 border border-amber-500/40 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
             >
-              <FileCode className="w-3.5 h-3.5" />
-              <span>مشاهده و کپی کل سورس‌کد</span>
+              <FileCode className="w-3.5 h-3.5 text-amber-700" />
+              <span>صفحه دانلود و جزئیات</span>
             </a>
           </div>
         </div>

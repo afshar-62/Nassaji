@@ -27,35 +27,59 @@
     </div>
 
     <!-- Download Options -->
+    <!-- Download Options -->
     <div class="space-y-4 pt-2">
-      <!-- In-Browser Blob Download Button (Zero Warning) -->
-      <button id="safeDownloadBtn" onclick="triggerSafeDownload()" class="w-full text-right group block p-5 rounded-2xl bg-gradient-to-r from-amber-950/80 via-zinc-900 to-zinc-900 border-2 border-amber-500 hover:border-amber-400 hover:bg-amber-950 transition-all shadow-xl cursor-pointer">
+      <!-- Option 1: Full source code with images -->
+      <a href="/taropod-full-source.zip" download="taropod-full-source.zip" class="w-full text-right group block p-5 rounded-2xl bg-gradient-to-r from-orange-950/80 via-zinc-900 to-zinc-900 border-2 border-orange-500 hover:border-orange-400 hover:bg-orange-950/50 transition-all shadow-xl cursor-pointer">
         <div class="flex items-center justify-between gap-4">
           <div class="flex items-center gap-3.5">
-            <span class="text-4xl" id="btnIcon">🚀</span>
+            <span class="text-3xl">📦</span>
             <div>
               <div class="flex items-center gap-2">
-                <h2 class="text-base sm:text-lg font-black text-amber-300 group-hover:text-amber-200" id="btnTitle">
-                  دانلود فوری فایل ZIP (روش امن در حافظه مرورگر)
+                <h2 class="text-base sm:text-lg font-black text-orange-300 group-hover:text-orange-200">
+                  دانلود بسته کامل (سورس‌کد + کلیه تصاویر و دارایی‌ها)
                 </h2>
-                <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">تضمین بدون اخطار</span>
+                <span class="bg-orange-500/20 text-orange-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-500/30">کامل و جامع</span>
               </div>
-              <p class="text-xs text-zinc-300 mt-1.5 leading-relaxed" id="btnDesc">
-                با کلیک روی این دکمه، فایل ZIP مستقیماً در حافظه مرورگر ساخته شده و بدون تغییر آدرس یا هشدار امنیتی دانلود می‌شود.
+              <p class="text-xs text-zinc-300 mt-1.5 leading-relaxed">
+                شامل کلیه کدهای فرانت‌اند و بک‌اند + ماژول کالیته ۵ رنگ + تصاویر باکیفیت دسته‌بندی‌ها و بیلبوردها (۱۸.۷ مگابایت)
               </p>
             </div>
           </div>
-          <span class="text-xs sm:text-sm font-bold bg-amber-500 text-zinc-950 px-4 py-2 rounded-xl shrink-0 group-hover:bg-amber-400 transition-colors shadow-md" id="btnBadge">
-            دانلود مستقیم
+          <span class="text-xs sm:text-sm font-bold bg-orange-500 text-zinc-950 px-4 py-2 rounded-xl shrink-0 group-hover:bg-orange-400 transition-colors shadow-md">
+            دانلود مستقیم ZIP
+          </span>
+        </div>
+      </a>
+
+      <!-- Option 2: Lightweight pure source code -->
+      <button id="safeDownloadBtn" onclick="triggerSafeDownload()" class="w-full text-right group block p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-700 hover:border-zinc-500 transition-all shadow-md cursor-pointer">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <span class="text-2xl" id="btnIcon">⚡</span>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm sm:text-base font-bold text-zinc-200 group-hover:text-white" id="btnTitle">
+                  دانلود سریع سورس‌کد خالص (بدون تصاویر سنگین)
+                </h3>
+                <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">فوری ۴۷۵KB</span>
+              </div>
+              <p class="text-[11px] text-zinc-400 mt-1" id="btnDesc">
+                شامل تمام فایل‌های TypeScript ،React 19 ،Tailwind CSS v4 ،Express و تنظیمات کامل پروژه
+              </p>
+            </div>
+          </div>
+          <span class="text-xs font-bold bg-zinc-800 text-zinc-200 px-3 py-1.5 rounded-lg shrink-0 group-hover:bg-zinc-700 transition-colors" id="btnBadge">
+            دانلود درجا
           </span>
         </div>
       </button>
 
-      <!-- Standard direct link fallback -->
-      <div class="p-3 bg-zinc-950/80 rounded-xl border border-zinc-800 flex items-center justify-between text-xs text-zinc-400">
-        <span>اگر ترجیح می‌دهید به روش عادی دانلود کنید:</span>
-        <a href="/taropod-full-source.zip" download="taropod-full-source.zip" class="text-amber-400 hover:underline font-bold">
-          لینک مستقیم استاتیک
+      <!-- Return to app link -->
+      <div class="text-center pt-2">
+        <a href="/" class="text-xs text-orange-400 hover:text-orange-300 hover:underline inline-flex items-center gap-1 font-bold">
+          <span>←</span>
+          <span>بازگشت به برنامه پلتفرم تاروپود</span>
         </a>
       </div>
     </div>
@@ -86,7 +110,7 @@
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'taropod-full-source.zip';
+            a.download = 'taropod-code-only.zip';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -101,8 +125,7 @@
           console.error(e);
         }
         
-        // Fallback
-        window.location.href = '/taropod-full-source.zip';
+        window.location.href = '/taropod-code-only.zip';
       }
     </script>
 
@@ -110,20 +133,19 @@
     <div class="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-4 text-xs space-y-2">
       <h3 class="font-bold text-zinc-300 flex items-center gap-1.5">
         <span>📄</span>
-        <span>محتویات کلیدی بسته سورس‌کد کامل پروژه:</span>
+        <span>محتویات کلیدی بسته سورس‌کد نهایی تاروپود (به‌روزشده):</span>
       </h3>
       <ul class="text-zinc-400 space-y-1.5 pr-4 list-disc text-[11px] leading-relaxed">
-        <li><code class="text-amber-400">server/</code> — سرور Express با معماری ماژولار (Explore, Listings, Businesses, Profiles, Taxonomy, Locations)</li>
-        <li><code class="text-amber-400">src/db/schema.ts</code> — طراحی جامع جداول دیتابیس PostgreSQL با Drizzle ORM</li>
-        <li><code class="text-amber-400">src/components/CustomMediaPlayer.tsx</code> — پلیر ویدیوی اختصاصی با نسبت‌های متنوع و تایم‌کد</li>
-        <li><code class="text-amber-400">src/components/ExploreMarket.tsx & HomeFeed.tsx</code> — فیدهای هوشمند با پشتیبانی از استوری، ویدیو و فیلترها</li>
-        <li><code class="text-amber-400">package.json & tsconfig.json</code> — تمام وابستگی‌ها و تنظیمات بیلد و تایپ‌اسکریپت</li>
-      </ul>
+        <li><code class="text-orange-400">src/components/ColorPalettePickerModal.tsx</code> و <code class="text-orange-400">src/utils/themePalette.ts</code> — سیستم کالیته ۵ رنگ برندینگ صنعتی با سوییچ آنی در سطح متغیرهای Tailwind v4</li>
+        <li><code class="text-orange-400">server/</code> — معماری ماژولار Express (ماژول‌های پروفایل‌ها، کشف، آگهی‌ها، کسب‌وکارها، موقعیت‌ها و دسته‌بندی نساجی)</li>
+        <li><code class="text-orange-400">src/db/schema.ts</code> — طراحی جامع جداول دیتابیس PostgreSQL با Drizzle ORM</li>
+        <li><code class="text-orange-400">src/components/CustomMediaPlayer.tsx</code> — پلیر ویدیوی اختصاصی با نسبت‌های متنوع و تایم‌کد</li>
+        <li><code class="text-orange-400">src/components/ExploreMarket.tsx & HomeFeed.tsx</code> — فیدهای هوشمند با استوری‌ها، ویدیوها و فیلترهای پیشرفته نساجی</li>
     </div>
 
     <!-- Return to App Button -->
     <div class="text-center pt-2">
-      <a href="/" class="text-xs text-amber-400 hover:text-amber-300 underline font-medium">
+      <a href="/" class="text-xs text-orange-400 hover:text-orange-300 underline font-medium">
         بازگشت به پیش‌نمایش اپلیکیشن
       </a>
     </div>

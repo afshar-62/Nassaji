@@ -29,7 +29,7 @@ export const DownloadSourceButton: React.FC<{ className?: string; label?: string
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'taropod-full-source.zip';
+        a.download = 'taropod-code-only.zip';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -37,12 +37,12 @@ export const DownloadSourceButton: React.FC<{ className?: string; label?: string
         setSuccess(true);
         setTimeout(() => setSuccess(false), 4000);
       } else {
-        const directRes = await fetch('/taropod-full-source.zip');
+        const directRes = await fetch('/taropod-code-only.zip');
         const blob = await directRes.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'taropod-full-source.zip';
+        a.download = 'taropod-code-only.zip';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -55,7 +55,7 @@ export const DownloadSourceButton: React.FC<{ className?: string; label?: string
       // If blob fails, trigger silent iframe download without redirecting top window
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
-      iframe.src = '/taropod-full-source.zip';
+      iframe.src = '/taropod-code-only.zip';
       document.body.appendChild(iframe);
       setTimeout(() => document.body.removeChild(iframe), 5000);
     } finally {
@@ -71,16 +71,16 @@ export const DownloadSourceButton: React.FC<{ className?: string; label?: string
       className={`w-full p-3 rounded-xl font-bold flex items-center justify-between transition-all cursor-pointer select-none shadow-md ${
         success
           ? 'bg-emerald-600 text-white'
-          : 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white'
+          : 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 text-white'
       } ${className}`}
     >
       <div className="flex items-center gap-2">
         {downloading ? (
-          <Loader2 className="w-4 h-4 animate-spin text-amber-200" />
+          <Loader2 className="w-4 h-4 animate-spin text-orange-200" />
         ) : success ? (
           <CheckCircle2 className="w-4 h-4 text-emerald-200" />
         ) : (
-          <FileArchive className="w-4 h-4 text-amber-200" />
+          <FileArchive className="w-4 h-4 text-orange-200" />
         )}
         <span className="text-xs">
           {downloading ? 'در حال آماده‌سازی فایل در مرورگر...' : success ? 'دانلود با موفقیت آغاز شد!' : label}
@@ -88,8 +88,8 @@ export const DownloadSourceButton: React.FC<{ className?: string; label?: string
       </div>
 
       <div className="flex items-center gap-1.5">
-        <span className="text-[10px] bg-black/25 px-2 py-0.5 rounded text-amber-100">
-          ۲۸۰ کیلوبایت (کامل)
+        <span className="text-[10px] bg-black/25 px-2 py-0.5 rounded text-orange-100">
+          ۴۷۵KB (کد نهایی)
         </span>
         <Download className="w-4 h-4" />
       </div>
