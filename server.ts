@@ -37,6 +37,21 @@ async function startServer() {
   app.get('/download', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public/download.html'));
   });
+  app.get('/taropod-code-only.zip', (req, res) => {
+    res.download(path.join(process.cwd(), 'public/taropod-pure-source.zip'), 'taropod-code-only.zip');
+  });
+  app.get('/taropod-pure-source.zip', (req, res) => {
+    res.download(path.join(process.cwd(), 'public/taropod-pure-source.zip'), 'taropod-pure-source.zip');
+  });
+  app.get('/taropod-full-source.zip', (req, res) => {
+    res.download(path.join(process.cwd(), 'public/taropod-complete-with-assets.zip'), 'taropod-full-source.zip');
+  });
+  app.get('/taropod-complete-with-assets.zip', (req, res) => {
+    res.download(path.join(process.cwd(), 'public/taropod-complete-with-assets.zip'), 'taropod-complete-with-assets.zip');
+  });
+  app.get('/zip_base64.txt', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public/zip_base64.txt'));
+  });
   app.use('/public', express.static(path.join(process.cwd(), 'public')));
 
   // Vite middleware for development vs Static serving for production

@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "tsx server/tests/vertical-slice.test.ts && tsx server/tests/vertical-slice-02.test.ts && tsx server/tests/vertical-slice-02-api.test.ts && tsx server/tests/vertical-slice-03.test.ts && tsx server/tests/vertical-slice-profile.test.ts"
+    "test": "tsx server/tests/vertical-slice.test.ts && tsx server/tests/vertical-slice-02.test.ts && tsx server/tests/vertical-slice-02-api.test.ts && tsx server/tests/vertical-slice-03.test.ts && tsx server/tests/vertical-slice-profile.test.ts && tsx server/tests/canonical-compatibility.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
