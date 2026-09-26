@@ -10,6 +10,96 @@
   }
 }
 
+/* ========================================================
+   کالیته‌های رنگی تخصصی برند تاروپود (۵ تم زنده)
+   ======================================================== */
+
+/* کالیته ۱: پویایی خط تولید و دوک بافندگی (Industrial Terra) - پیش‌فرض */
+:root,
+:root[data-palette="palette-1"] {
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdba74;
+  --color-orange-400: #fb923c;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
+  --color-brand-primary: #ea580c;
+  --color-brand-secondary: #0284c7;
+  --palette-title: "پویایی خط تولید و دوک بافندگی (نارنجی آجری)";
+}
+
+/* کالیته ۲: ایندیگو سنتی و مس کارگاهی (Textile Indigo & Copper) - سرمه‌ای و مس */
+:root[data-palette="palette-2"] {
+  --color-orange-50: #f1f5f9;
+  --color-orange-100: #e2e8f0;
+  --color-orange-200: #cbd5e1;
+  --color-orange-300: #94a3b8;
+  --color-orange-400: #334155;
+  --color-orange-500: #1e3a8a;
+  --color-orange-600: #0f2c59;
+  --color-orange-700: #0a1f3d;
+  --color-orange-800: #061327;
+  --color-orange-900: #030a14;
+  --color-brand-primary: #0f2c59;
+  --color-brand-secondary: #e06d26;
+  --palette-title: "ایندیگو سنتی و مس کارگاهی (سرمه‌ای)";
+}
+
+/* کالیته ۳: مزارع پنبه و الیاف طبیعی (Bio-Fiber Olive & Terracotta) - سبز پنبه */
+:root[data-palette="palette-3"] {
+  --color-orange-50: #f0fdf4;
+  --color-orange-100: #dcfce7;
+  --color-orange-200: #bbf7d0;
+  --color-orange-300: #86efac;
+  --color-orange-400: #4ade80;
+  --color-orange-500: #15803d;
+  --color-orange-600: #166534;
+  --color-orange-700: #14532d;
+  --color-orange-800: #052e16;
+  --color-orange-900: #021a0c;
+  --color-brand-primary: #166534;
+  --color-brand-secondary: #c2410c;
+  --palette-title: "مزارع پنبه و الیاف طبیعی (سبز الیاف)";
+}
+
+/* کالیته ۴: روناس سنتی و فولاد بافندگی (Madder Crimson & Slate) - زرشکی روناس */
+:root[data-palette="palette-4"] {
+  --color-orange-50: #fef2f2;
+  --color-orange-100: #fee2e2;
+  --color-orange-200: #fecaca;
+  --color-orange-300: #fca5a5;
+  --color-orange-400: #f87171;
+  --color-orange-500: #b91c1c;
+  --color-orange-600: #991b1b;
+  --color-orange-700: #7f1d1d;
+  --color-orange-800: #450a0a;
+  --color-orange-900: #2b0606;
+  --color-brand-primary: #991b1b;
+  --color-brand-secondary: #0d9488;
+  --palette-title: "روناس سنتی و فولاد بافندگی (زرشکی روناسی)";
+}
+
+/* کالیته ۵: کبالت دیجیتال و کهربای تاروپود (Tech Cobalt & Amber Yarn) - آبی کبالت */
+:root[data-palette="palette-5"] {
+  --color-orange-50: #eff6ff;
+  --color-orange-100: #dbeafe;
+  --color-orange-200: #bfdbfe;
+  --color-orange-300: #93c5fd;
+  --color-orange-400: #60a5fa;
+  --color-orange-500: #2563eb;
+  --color-orange-600: #1d4ed8;
+  --color-orange-700: #1e40af;
+  --color-orange-800: #172554;
+  --color-orange-900: #0f172a;
+  --color-brand-primary: #1d4ed8;
+  --color-brand-secondary: #d97706;
+  --palette-title: "کبالت دیجیتال و کهربای تاروپود (آبی کبالت)";
+}
+
 body {
   font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   user-select: none;

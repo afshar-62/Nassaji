@@ -60,16 +60,23 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({ ad, onClose })
         {/* Header */}
         <div className="p-3 bg-zinc-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img
-              src={ad.authorAvatar}
-              alt={ad.authorName}
-              className="w-9 h-9 rounded-full object-cover border border-zinc-700"
-            />
+            <div className="relative">
+              <img
+                src={ad.authorAvatar}
+                alt={ad.authorName}
+                className="w-9 h-9 rounded-full object-cover border border-zinc-700"
+              />
+              <span
+                className={`w-2.5 h-2.5 rounded-full border-2 border-zinc-900 absolute bottom-0 right-0 ${
+                  ad.isOnline !== false ? 'bg-emerald-500' : 'bg-rose-500'
+                }`}
+                title={ad.isOnline !== false ? 'آنلاین' : 'آفلاین'}
+              />
+            </div>
             <div>
               <h3 className="text-xs font-bold text-white">{ad.authorName}</h3>
-              <p className="text-[10px] text-emerald-400 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span>پاسخگوی آنلاین</span>
+              <p className="text-[10px] text-zinc-400">
+                {ad.authorSpecialty || ad.category}
               </p>
             </div>
           </div>

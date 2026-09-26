@@ -31,6 +31,7 @@ interface BusinessMapProps {
   onSelectAuthor: (authorId: string) => void;
   onSelectAd: (ad: AdItem) => void;
   selectedCity: string;
+  searchQuery?: string;
 }
 
 // رسته‌های دائمی کسب‌وکارهای نساجی و پوشاک روی نقشه (مطابق ردیف افقی تصویر ارسالی)
@@ -314,9 +315,11 @@ export const BusinessMap: React.FC<BusinessMapProps> = ({
   onSelectAuthor,
   onSelectAd,
   selectedCity: propSelectedCity,
+  searchQuery: propSearchQuery = '',
 }) => {
   // جستجو و فیلترها با پشتیبانی کامل سلسله‌مراتبی (کشور > استان > شهر)
-  const [searchQuery, setSearchQuery] = useState('');
+  const [internalSearchQuery, setInternalSearchQuery] = useState('');
+  const activeSearch = propSearchQuery || internalSearchQuery;
   const [selectedTag, setSelectedTag] = useState('all');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('کسب‌وکارهای نساجی');
   const [activeCountry, setActiveCountry] = useState('ایران');
@@ -324,6 +327,12 @@ export const BusinessMap: React.FC<BusinessMapProps> = ({
   const [activeCity, setActiveCity] = useState(propSelectedCity || 'تهران');
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (propSelectedCity) {
+      setActiveCity(propSelectedCity);
+    }
+  }, [propSelectedCity]);
 
   // وضعیت نقشه و کارت متناسب (Compact & Balanced Bottom Card)
   const [selectedPinId, setSelectedPinId] = useState<string>('pb-1');
@@ -337,12 +346,12 @@ export const BusinessMap: React.FC<BusinessMapProps> = ({
   const filteredBusinesses = useMemo(() => {
     return PERMANENT_TEXTILE_BUSINESSES.filter((b) => {
       const matchSearch =
-        !searchQuery.trim() ||
-        b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.specialty.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.city.toLowerCase().includes(searchQuery.toLowerCase());
+        !activeSearch.trim() ||
+        b.name.toLowerCase().includes(activeSearch.toLowerCase()) ||
+        b.specialty.toLowerCase().includes(activeSearch.toLowerCase()) ||
+        b.area.toLowerCase().includes(activeSearch.toLowerCase()) ||
+        b.category.toLowerCase().includes(activeSearch.toLowerCase()) ||
+        b.city.toLowerCase().includes(activeSearch.toLowerCase());
 
       const matchTag =
         selectedTag === 'all' || b.categoryType === selectedTag;
@@ -360,7 +369,7 @@ export const BusinessMap: React.FC<BusinessMapProps> = ({
       // در صورتی که پینی در این شهر نباشد، برای جلوگیری از خالی شدن نقشه فیلتر تگ و جستجو ملاک است
       return matchSearch && matchTag;
     });
-  }, [searchQuery, selectedTag, activeCity, activeProvince]);
+  }, [activeSearch, selectedTag, activeCity, activeProvince]);
 
   // کسب‌وکار انتخاب‌شده در کارت پایین نقشه
   const activeBusiness = useMemo(() => {
@@ -400,38 +409,23 @@ export const BusinessMap: React.FC<BusinessMapProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-30 bg-zinc-100 overflow-hidden font-['Vazirmatn',sans-serif] select-none text-right">
-      {/* ۱. نوار ابزار بالای نقشه (کاملاً منطبق بر سبک عکس ارسالی ۱۷۸۹۸۸۱۱۱۰۵۳۷) */}
+    <div className="fixed inset-0 top-[57px] bottom-16 z-20 bg-zinc-100 overflow-hidden font-['Vazirmatn',sans-serif] select-none text-right">
+      {/* ۱. نوار ابزار بالای نقشه (فیلتر و زیردسته‌های تخصصی اصناف) */}
       <div className="absolute top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200/80 px-3 pt-2 pb-2 space-y-2 shadow-xs">
-        {/* ردیف اول: جستجو و انتخاب شهر */}
-        <div className="flex items-center gap-2">
-          {/* دکمه انتخاب سلسله‌مراتبی کشور/استان/شهر با موقعیت پین در چپ */}
-          <button
-            onClick={() => setIsLocationModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold shrink-0 transition-colors shadow-2xs"
-            title="انتخاب کشور، استان و شهر"
-          >
-            <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="max-w-[85px] truncate">{activeCity || activeProvince || 'تهران'}</span>
-          </button>
-
-          {/* کادر جستجو با آیکون ذره‌بین در راست */}
-          <div className="relative flex-1">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="جستجو در کارخانه‌ها، کارگاه‌ها و راسته بازار..."
-              className="w-full bg-zinc-100/90 text-xs rounded-xl pr-8 pl-3 py-2 text-zinc-800 placeholder-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-300 focus:outline-none transition-all"
-            />
-            <Search className="w-4 h-4 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-        </div>
-
-        {/* ردیف دوم: تگ فعال با ضربدر و دکمه کادردار «فیلتر» (عین عکس ارسالی) */}
+        {/* ردیف دکمه فیلتر در سمت راست (RTL) و تگ فعال */}
         <div className="flex items-center justify-between gap-2 pt-0.5">
-          {/* تگ دسته فعال با امکان حذف سریع */}
-          <div className="flex items-center gap-1.5">
+          {/* سمت راست (در RTL): دکمه کادردار «فیلتر» با تم نارنجی سازمانی */}
+          <div className="flex items-center gap-2">
+            <button
+              id="map-filter-btn"
+              onClick={() => setIsFilterModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-600 text-orange-600 hover:bg-orange-50 text-xs font-bold transition-colors focus:outline-none shadow-2xs cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 stroke-[2.2]" />
+              <span>فیلتر</span>
+            </button>
+
+            {/* تگ دسته فعال با امکان حذف سریع */}
             {activeCategoryFilter && (
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-zinc-300 bg-white text-zinc-700 text-xs font-medium shadow-2xs">
                 <span>{activeCategoryFilter}</span>
@@ -440,7 +434,7 @@ export const BusinessMap: React.FC<BusinessMapProps> = ({
                     setActiveCategoryFilter('');
                     setSelectedTag('all');
                   }}
-                  className="text-zinc-400 hover:text-zinc-700 focus:outline-none"
+                  className="text-zinc-400 hover:text-zinc-700 focus:outline-none cursor-pointer"
                   title="حذف فیلتر"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -448,26 +442,17 @@ export const BusinessMap: React.FC<BusinessMapProps> = ({
               </div>
             )}
           </div>
-
-          {/* دکمه کادردار فیلتر با تم نارنجی سازمانی */}
-          <button
-            onClick={() => setIsFilterModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-lg border border-orange-600 text-orange-600 hover:bg-orange-50 text-xs font-bold transition-colors focus:outline-none shadow-2xs"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5 stroke-[2.2]" />
-            <span>فیلتر</span>
-          </button>
         </div>
 
-        {/* ردیف سوم: زیردسته‌های افقی تخصصی نساجی */}
-        <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+        {/* ردیف زیردسته‌های افقی تخصصی نساجی */}
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
           {BUSINESS_MAP_CATEGORIES.map((cat) => {
             const isActive = selectedTag === cat.id;
             return (
               <button
                 key={cat.id}
                 onClick={() => setSelectedTag(cat.id)}
-                className={`text-xs font-bold whitespace-nowrap transition-colors focus:outline-none shrink-0 ${
+                className={`text-xs font-bold whitespace-nowrap transition-colors focus:outline-none shrink-0 cursor-pointer ${
                   isActive
                     ? 'text-orange-600 border-b-2 border-orange-600 pb-0.5'
                     : 'text-zinc-500 hover:text-zinc-800'

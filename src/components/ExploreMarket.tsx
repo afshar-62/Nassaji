@@ -18,6 +18,7 @@ interface ExploreMarketProps {
   onSelectAd: (ad: AdItem) => void;
   selectedCity: string;
   onSelectCity: (city: string) => void;
+  searchQuery?: string;
 }
 
 const DEFAULT_CITIES = [
@@ -49,8 +50,10 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
   onSelectAd,
   selectedCity,
   onSelectCity,
+  searchQuery: externalSearchQuery = '',
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [internalSearchQuery, setInternalSearchQuery] = useState('');
+  const activeSearch = externalSearchQuery || internalSearchQuery;
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('همه');
   const [isCityOpen, setIsCityOpen] = useState(false);
@@ -97,7 +100,7 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
     const timer = setTimeout(() => {
       exploreService
         .fetchExploreItems({
-          search: searchQuery.trim() || undefined,
+          search: activeSearch.trim() || undefined,
           city: selectedCity === 'همه شهرها' ? undefined : selectedCity,
           categoryId: selectedCategory === 'همه' ? undefined : selectedCategory,
         })
@@ -120,7 +123,7 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [searchQuery, selectedCity, selectedCategory]);
+  }, [activeSearch, selectedCity, selectedCategory]);
 
   // Filter items by tag
   const filteredItems = useMemo(() => {
@@ -208,42 +211,28 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
 
   return (
     <div className="pb-24 max-w-md mx-auto bg-white min-h-screen font-['Vazirmatn',sans-serif]">
-      {/* ۱. نوار جستجو و موقعیت شهر (دقیقاً مطابق بالای عکس ارسالی) */}
-      <div className="sticky top-0 z-30 bg-white border-b border-zinc-100 px-3 pt-2.5 pb-2 space-y-2">
-        <div className="flex items-center gap-2">
-          {/* دکمه انتخاب شهر با موقعیت پین در چپ */}
-          <button
-            onClick={() => setIsCityOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold shrink-0 transition-colors"
-            title="انتخاب شهر"
-          >
-            <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-            <span>{selectedCity}</span>
-          </button>
-
-          {/* کادر جستجو با آیکون ذره‌بین در راست */}
-          <div className="relative flex-1">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="جستجو"
-              className="w-full bg-zinc-100/90 text-xs rounded-xl pr-8 pl-3 py-2 text-zinc-800 placeholder-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-300 focus:outline-none transition-all"
-            />
-            <Search className="w-4 h-4 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-        </div>
-
-        {/* ۲. ردیف دکمه فیلتر و بج دسته‌بندی فعال با ضربدر (دقیقاً عین عکس ارسالی) */}
+      {/* ۱. نوار فیلتر و رسته‌های تخصصی نساجی */}
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-zinc-200/80 px-3 pt-2 pb-2 space-y-2">
+        {/* ردیف دکمه فیلتر در سمت راست (RTL) و بج دسته‌بندی فعال */}
         <div className="flex items-center justify-between gap-2 pt-0.5">
-          {/* سمت چپ (در RTL راست): تگ دسته‌بندی فعال با ضربدر جهت حذف */}
-          <div className="flex items-center gap-1.5">
+          {/* سمت راست (در RTL): دکمه کادردار «فیلتر» با تم نارنجی سازمانی */}
+          <div className="flex items-center gap-2">
+            <button
+              id="explore-filter-btn"
+              onClick={() => setIsFilterModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-600 text-orange-600 hover:bg-orange-50 text-xs font-bold transition-colors focus:outline-none cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 stroke-[2.2]" />
+              <span>فیلتر</span>
+            </button>
+
+            {/* تگ دسته‌بندی فعال با ضربدر جهت حذف سریع */}
             {selectedCategory && selectedCategory !== 'همه' && (
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-zinc-300 bg-white text-zinc-700 text-xs font-medium">
                 <span>{selectedCategory}</span>
                 <button
                   onClick={() => setSelectedCategory('همه')}
-                  className="text-zinc-400 hover:text-zinc-700 focus:outline-none"
+                  className="text-zinc-400 hover:text-zinc-700 focus:outline-none cursor-pointer"
                   title="حذف فیلتر دسته"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -251,26 +240,17 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
               </div>
             )}
           </div>
-
-          {/* سمت راست (در RTL چپ): دکمه کادردار «فیلتر» با تم نارنجی سازمانی */}
-          <button
-            onClick={() => setIsFilterModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-lg border border-orange-600 text-orange-600 hover:bg-orange-50 text-xs font-bold transition-colors focus:outline-none"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5 stroke-[2.2]" />
-            <span>فیلتر</span>
-          </button>
         </div>
 
-        {/* ۳. ردیف افقی متن‌های زیر دسته‌ها (با فونت نارنجی فعال و اسکرول افقی) */}
-        <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+        {/* ردیف افقی متن‌های زیر دسته‌ها (با فونت نارنجی فعال و اسکرول افقی) */}
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
           {TEXTILE_NAV_TAGS.map((tag) => {
             const isActive = selectedTag === tag.id;
             return (
               <button
                 key={tag.id}
                 onClick={() => setSelectedTag(tag.id)}
-                className={`text-xs font-bold whitespace-nowrap transition-colors focus:outline-none shrink-0 ${
+                className={`text-xs font-bold whitespace-nowrap transition-colors focus:outline-none shrink-0 cursor-pointer ${
                   isActive
                     ? 'text-orange-600 border-b-2 border-orange-600 pb-0.5'
                     : 'text-zinc-500 hover:text-zinc-800'
@@ -283,12 +263,12 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
         </div>
       </div>
 
-      {/* ۴. گرید ۳ ستونه کاملاً یکدست مربع در مربع تا انتها (بدون هیچ مربع بزرگ، بدون ستاره و امتیاز شلوغ) */}
-      <section className="px-0.5 pt-0.5">
+      {/* ۲. گرید ۲ ستونه متناسب و واضح نساجی (به جای ۳ ستونه) */}
+      <section className="px-1 pt-1">
         {isLoading ? (
-          <div className="grid grid-cols-3 gap-0.5 sm:gap-1">
-            {Array.from({ length: 15 }).map((_, i) => (
-              <div key={i} className="aspect-square bg-zinc-200 animate-pulse" />
+          <div className="grid grid-cols-2 gap-1 sm:gap-1.5">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="aspect-square bg-zinc-200 rounded-sm animate-pulse" />
             ))}
           </div>
         ) : error ? (
@@ -302,15 +282,15 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
               onClick={() => {
                 setSelectedTag('all');
                 setSelectedCategory('همه');
-                setSearchQuery('');
+                setInternalSearchQuery('');
               }}
-              className="text-xs text-orange-600 font-bold underline mt-2 inline-block"
+              className="text-xs text-orange-600 font-bold underline mt-2 inline-block cursor-pointer"
             >
               مشاهده همه تصاویر اکسپلور
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-0.5 sm:gap-1">
+          <div className="grid grid-cols-2 gap-1 sm:gap-1.5">
             {filteredItems.map((item, idx) => {
               const coverUrl = item.media[0]?.url || 'https://images.unsplash.com/photo-1528458876861-544fd1761a91?auto=format&fit=crop&w=600&q=80';
               const isMultiImage = item.media.length > 1;
@@ -321,7 +301,7 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
                   key={`${item.listing.id}-${idx}`}
                   id={`explore-square-${item.listing.id}`}
                   onClick={() => handleSelectItem(item)}
-                  className="relative aspect-square overflow-hidden bg-zinc-100 group focus:outline-none active:opacity-85 select-none"
+                  className="relative aspect-square overflow-hidden bg-zinc-100 rounded-sm group focus:outline-none active:opacity-85 select-none cursor-pointer"
                 >
                   <img
                     src={coverUrl}
@@ -330,15 +310,27 @@ export const ExploreMarket: React.FC<ExploreMarketProps> = ({
                     loading="lazy"
                   />
 
-                  {/* آیکون ظریف سفید در گوشه بالا-چپ جهت نمایش چندتصویری یا ویدیو (دقیقاً مانند اینستاگرام و عکس ارسالی) */}
+                  {/* گرادیانت سایه پایین برای خوانایی عنوان */}
+                  <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end text-right pointer-events-none">
+                    <span className="text-white text-xs font-bold truncate">
+                      {item.listing.title}
+                    </span>
+                    {item.listing.priceAmount && (
+                      <span className="text-amber-300 text-[10px] font-medium">
+                        {item.listing.priceAmount.toLocaleString('fa-IR')} تومان
+                      </span>
+                    )}
+                  </div>
+
+                  {/* آیکون ظریف سفید در گوشه بالا-چپ جهت نمایش چندتصویری یا ویدیو */}
                   {isMultiImage && !isVideoItem && (
-                    <div className="absolute top-1.5 left-1.5 text-white drop-shadow-md pointer-events-none">
+                    <div className="absolute top-1.5 left-1.5 text-white drop-shadow-md pointer-events-none bg-black/30 rounded-md p-1 backdrop-blur-xs">
                       <Copy className="w-3.5 h-3.5 fill-white stroke-none" />
                     </div>
                   )}
 
                   {isVideoItem && (
-                    <div className="absolute top-1.5 left-1.5 text-white drop-shadow-md pointer-events-none">
+                    <div className="absolute top-1.5 left-1.5 text-white drop-shadow-md pointer-events-none bg-black/30 rounded-md p-1 backdrop-blur-xs">
                       <Video className="w-3.5 h-3.5 fill-white stroke-none" />
                     </div>
                   )}

@@ -28,60 +28,96 @@
 
     <!-- Download Options -->
     <div class="space-y-4 pt-2">
-      <!-- Option 1: Profile Slice Zip (User's specific request) -->
-      <a href="/api/v1/download/profile-module.zip" class="group block p-4 rounded-2xl bg-gradient-to-r from-amber-950/60 to-zinc-900 border-2 border-amber-500/80 hover:border-amber-400 hover:bg-amber-950/80 transition-all shadow-lg">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="text-3xl">🗂️</span>
+      <!-- In-Browser Blob Download Button (Zero Warning) -->
+      <button id="safeDownloadBtn" onclick="triggerSafeDownload()" class="w-full text-right group block p-5 rounded-2xl bg-gradient-to-r from-amber-950/80 via-zinc-900 to-zinc-900 border-2 border-amber-500 hover:border-amber-400 hover:bg-amber-950 transition-all shadow-xl cursor-pointer">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <span class="text-4xl" id="btnIcon">🚀</span>
             <div>
-              <h2 class="text-sm sm:text-base font-black text-amber-300 group-hover:text-amber-200">
-                دانلود فایل ZIP کدهای پروفایل (Profile Slice v0.1)
-              </h2>
-              <p class="text-xs text-zinc-400 mt-1">
-                شامل: بک‌اند، روت‌ها، سرویس، مدل پایگاه‌داده، فرانت‌اند و آزمون‌های هویت حرفه‌ای
+              <div class="flex items-center gap-2">
+                <h2 class="text-base sm:text-lg font-black text-amber-300 group-hover:text-amber-200" id="btnTitle">
+                  دانلود فوری فایل ZIP (روش امن در حافظه مرورگر)
+                </h2>
+                <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">تضمین بدون اخطار</span>
+              </div>
+              <p class="text-xs text-zinc-300 mt-1.5 leading-relaxed" id="btnDesc">
+                با کلیک روی این دکمه، فایل ZIP مستقیماً در حافظه مرورگر ساخته شده و بدون تغییر آدرس یا هشدار امنیتی دانلود می‌شود.
               </p>
             </div>
           </div>
-          <span class="text-xs font-bold bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-xl shrink-0 group-hover:bg-amber-400 transition-colors">
+          <span class="text-xs sm:text-sm font-bold bg-amber-500 text-zinc-950 px-4 py-2 rounded-xl shrink-0 group-hover:bg-amber-400 transition-colors shadow-md" id="btnBadge">
             دانلود مستقیم
           </span>
         </div>
-      </a>
+      </button>
 
-      <!-- Option 2: Full Project Source Zip -->
-      <a href="/api/v1/download/full-source.zip" class="group block p-4 rounded-2xl bg-zinc-800/60 border border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800 transition-all">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="text-3xl">💻</span>
-            <div>
-              <h2 class="text-sm sm:text-base font-black text-zinc-200 group-hover:text-white">
-                دانلود فایل ZIP کل پروژه (Full Monolith Source)
-              </h2>
-              <p class="text-xs text-zinc-400 mt-1">
-                سورس کامل کل پلتفرم (بک‌اند Express، رابط React، دیتابیس Drizzle و تست‌ها)
-              </p>
-            </div>
-          </div>
-          <span class="text-xs font-bold bg-zinc-700 text-white px-3 py-1.5 rounded-xl shrink-0 group-hover:bg-zinc-600 transition-colors">
-            دانلود مستقیم
-          </span>
-        </div>
-      </a>
+      <!-- Standard direct link fallback -->
+      <div class="p-3 bg-zinc-950/80 rounded-xl border border-zinc-800 flex items-center justify-between text-xs text-zinc-400">
+        <span>اگر ترجیح می‌دهید به روش عادی دانلود کنید:</span>
+        <a href="/taropod-full-source.zip" download="taropod-full-source.zip" class="text-amber-400 hover:underline font-bold">
+          لینک مستقیم استاتیک
+        </a>
+      </div>
     </div>
+
+    <script>
+      async function triggerSafeDownload() {
+        const btnTitle = document.getElementById('btnTitle');
+        const btnDesc = document.getElementById('btnDesc');
+        const btnBadge = document.getElementById('btnBadge');
+        const btnIcon = document.getElementById('btnIcon');
+        
+        btnTitle.innerText = 'در حال ساخت فایل در حافظه سیستم...';
+        btnBadge.innerText = 'چند لحظه...';
+        btnIcon.innerText = '⏳';
+
+        try {
+          const res = await fetch('/public/zip_base64.txt');
+          if (res.ok) {
+            const b64 = await res.text();
+            const byteCharacters = atob(b64.trim());
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/zip' });
+            
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'taropod-full-source.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            btnTitle.innerText = 'دانلود با موفقیت آغاز شد!';
+            btnBadge.innerText = 'انجام شد ✓';
+            btnIcon.innerText = '✅';
+            return;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        
+        // Fallback
+        window.location.href = '/taropod-full-source.zip';
+      }
+    </script>
 
     <!-- Contents List -->
     <div class="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-4 text-xs space-y-2">
       <h3 class="font-bold text-zinc-300 flex items-center gap-1.5">
         <span>📄</span>
-        <span>محتویات کلیدی بسته فشرده پروفایل:</span>
+        <span>محتویات کلیدی بسته سورس‌کد کامل پروژه:</span>
       </h3>
-      <ul class="text-zinc-400 space-y-1 pr-4 list-disc text-[11px] leading-relaxed">
-        <li><code class="text-amber-400">server/modules/profiles/</code> — معماری Clean شامل DTO، Service، Repository و Router</li>
-        <li><code class="text-amber-400">server/tests/vertical-slice-profile.test.ts</code> — مجموعه تست ۱۲ مرحله‌ای</li>
-        <li><code class="text-amber-400">src/components/ProfileView.tsx</code> — رابط ویترین و صفحه عمومی پروفایل B2B</li>
-        <li><code class="text-amber-400">src/components/ProfileEditModal.tsx</code> — فرم ویرایش هویت و ارسال مدارک صنفی</li>
-        <li><code class="text-amber-400">src/core/api/profiles.service.ts</code> — سرویس ارتباط کلاینت با API</li>
-        <li><code class="text-amber-400">src/db/schema.ts</code> — جداول PostgreSQL (پروفایل‌ها، گواهی‌ها، واحدها و امتیازات)</li>
+      <ul class="text-zinc-400 space-y-1.5 pr-4 list-disc text-[11px] leading-relaxed">
+        <li><code class="text-amber-400">server/</code> — سرور Express با معماری ماژولار (Explore, Listings, Businesses, Profiles, Taxonomy, Locations)</li>
+        <li><code class="text-amber-400">src/db/schema.ts</code> — طراحی جامع جداول دیتابیس PostgreSQL با Drizzle ORM</li>
+        <li><code class="text-amber-400">src/components/CustomMediaPlayer.tsx</code> — پلیر ویدیوی اختصاصی با نسبت‌های متنوع و تایم‌کد</li>
+        <li><code class="text-amber-400">src/components/ExploreMarket.tsx & HomeFeed.tsx</code> — فیدهای هوشمند با پشتیبانی از استوری، ویدیو و فیلترها</li>
+        <li><code class="text-amber-400">package.json & tsconfig.json</code> — تمام وابستگی‌ها و تنظیمات بیلد و تایپ‌اسکریپت</li>
       </ul>
     </div>
 

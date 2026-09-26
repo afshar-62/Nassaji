@@ -2,6 +2,21 @@ import { StoryItem } from '../types';
 
 export const MOCK_STORIES_10: StoryItem[] = [
   {
+    id: 'story-taropod',
+    authorId: 'taropod-official',
+    authorName: 'تاروپود (رسمی)',
+    authorAvatar: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=200&q=80',
+    category: 'رسانه رسمی صنعت نساجی',
+    mediaType: 'video',
+    mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-close-up-of-a-sewing-machine-needle-in-operation-42356-large.mp4',
+    aspectRatio: 'vertical',
+    durationSeconds: 60,
+    timeAgo: 'همیشه فعال',
+    isVerified: true,
+    caption: 'تاروپود؛ اولین و جامع‌ترین سامانه تخصصی دادوستد و آگاهی زنجیره ارزش نساجی و پوشاک کشور',
+    linkAdId: 'ad-1',
+  },
+  {
     id: 'story-1',
     authorId: 'user-1',
     authorName: 'تولیدی پارس دوخت',

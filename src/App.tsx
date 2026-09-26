@@ -14,11 +14,27 @@ import { AiAssistantModal } from './components/AiAssistantModal';
 import { DirectChatModal } from './components/DirectChatModal';
 import { MessagesInboxModal } from './components/MessagesInboxModal';
 import { BookmarksModal } from './components/BookmarksModal';
+import { ColorPalettePickerModal } from './components/ColorPalettePickerModal';
+import { getStoredPalette, applyPaletteToDom } from './utils/themePalette';
+import { Palette } from 'lucide-react';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<TabType>('home');
   const [selectedCity, setSelectedCity] = useState<string>('تهران');
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Live Theme Palette State
+  const [activePalette, setActivePalette] = useState<string>(() => getStoredPalette());
+  const [isPaletteModalOpen, setIsPaletteModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    applyPaletteToDom(activePalette);
+  }, [activePalette]);
+
+  const handleSelectPalette = (id: string) => {
+    setActivePalette(id);
+    applyPaletteToDom(id);
+  };
 
   // Main ads state backed by live PostgreSQL listings API
   const [ads, setAds] = useState<AdItem[]>([]);
@@ -110,8 +126,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-100 text-zinc-900 font-['Vazirmatn',sans-serif] selection:bg-amber-500 selection:text-white">
-      {/* Top Header - Shown on Home and Explore */}
-      {!selectedProfileId && currentTab !== 'map' && (
+      {/* Top Header - Shown across Home, Explore, and Map */}
+      {!selectedProfileId && currentTab !== 'settings' && (
         <Header
           selectedCity={selectedCity}
           onSelectCity={setSelectedCity}
@@ -121,6 +137,7 @@ export default function App() {
           onOpenMessages={() => setIsMessagesOpen(true)}
           onOpenSettings={() => setCurrentTab('settings')}
           onOpenBookmarks={() => setIsBookmarksOpen(true)}
+          onOpenPaletteModal={() => setIsPaletteModalOpen(true)}
         />
       )}
 
@@ -148,13 +165,15 @@ export default function App() {
               setSearchQuery(catName);
               window.scrollTo({ top: 400, behavior: 'smooth' });
             }}
+            onCreateListing={() => setIsCreateOpen(true)}
           />
         ) : currentTab === 'explore' ? (
-          /* Sketch 2: Explore Grid with main categories, sub-filters, 3-column media grid */
+          /* Sketch 2: Explore Grid with main categories, sub-filters, 2-column media grid */
           <ExploreMarket
             onSelectAd={(ad) => setSelectedAd(ad)}
             selectedCity={selectedCity}
             onSelectCity={setSelectedCity}
+            searchQuery={searchQuery}
           />
         ) : currentTab === 'map' ? (
           /* Sketch 3: Interactive Business Map with pins, floating detail card, user location, routing apps */
@@ -162,6 +181,7 @@ export default function App() {
             onSelectAuthor={(authorId) => setSelectedProfileId(authorId)}
             onSelectAd={(ad) => setSelectedAd(ad)}
             selectedCity={selectedCity}
+            searchQuery={searchQuery}
           />
         ) : (
           /* Sketch 6: Settings View with 6 top cards, identity verification, menu options, FAQs */
@@ -170,6 +190,8 @@ export default function App() {
             onOpenBookmarks={() => setIsBookmarksOpen(true)}
             onOpenProfile={() => setSelectedProfileId('pars-dookht')}
             bookmarkedAdsCount={bookmarkedIds.length}
+            onOpenPaletteModal={() => setIsPaletteModalOpen(true)}
+            activePaletteId={activePalette}
           />
         )}
       </main>
@@ -233,6 +255,14 @@ export default function App() {
           onRemoveBookmark={handleToggleBookmark}
         />
       )}
+
+      {/* Color Palette Picker Modal - ۵ کالیته رنگی زنده */}
+      <ColorPalettePickerModal
+        isOpen={isPaletteModalOpen}
+        onClose={() => setIsPaletteModalOpen(false)}
+        activePaletteId={activePalette}
+        onSelectPalette={handleSelectPalette}
+      />
     </div>
   );
 }

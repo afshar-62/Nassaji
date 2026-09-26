@@ -62,22 +62,22 @@ export const Navigation: React.FC<NavigationProps> = ({
           </span>
         </button>
 
-        {/* ۳. دکمه مرکزی ثبت آگهی (کاملاً در مرکز هندسی صفحه با استایل ارگونومیک) */}
+        {/* ۳. دکمه مرکزی ثبت آگاهی (متناسب و برجسته) */}
         <div className="flex flex-col items-center justify-center h-full relative">
           <button
             id="nav-btn-create"
             onClick={() => onSelectTab('create')}
-            className="w-12 h-12 -mt-5 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white shadow-lg shadow-orange-600/30 border-4 border-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all focus:outline-none"
-            title="ثبت رایگان آگهی"
+            className="w-10 h-10 -mt-2.5 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white shadow-md shadow-orange-600/25 border-2 border-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all focus:outline-none cursor-pointer"
+            title="ثبت آگاهی"
           >
-            <Plus className="w-6 h-6 stroke-[2.8]" />
+            <Plus className="w-5 h-5 stroke-[2.6]" />
           </button>
           <span
             className={`text-[10px] mt-0.5 font-bold transition-all ${
               currentTab === 'create' ? 'text-orange-600' : 'text-zinc-600'
             }`}
           >
-            ثبت آگهی
+            ثبت آگاهی
           </span>
         </div>
 

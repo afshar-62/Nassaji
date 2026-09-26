@@ -44,11 +44,11 @@ import {
   Building2,
   Eye,
   MapPin,
-  ThumbsUp,
-  ThumbsDown,
+  GraduationCap,
+  Leaf,
 } from 'lucide-react';
 import { AdItem } from '../types';
-import { MOCK_STORIES } from '../data/mockData';
+import { MOCK_STORIES_10 } from '../data/mockStoriesData';
 import { CustomMediaPlayer } from './CustomMediaPlayer';
 
 import { StoryViewerModal } from './StoryViewerModal';
@@ -61,137 +61,53 @@ interface HomeFeedProps {
   onSelectAd: (ad: AdItem) => void;
   onSelectAuthor: (authorId: string) => void;
   onSelectCategory: (categoryName: string) => void;
+  onCreateListing?: () => void;
 }
 
-// 16 Authentic Categories for TAROPOD Textile & Apparel Platform (Frameless, Minimalist 4-Column Layout)
+// 15 Industry Categories (Pure frameless 3D Isometric Icons, unified across all 15 categories)
 const MINIMAL_CATEGORIES = [
-  { id: 'cat-fabric', title: 'پارچه و منسوجات', icon: Layers, query: 'پارچه' },
-  { id: 'cat-yarn', title: 'نخ و الیاف', icon: Disc, query: 'نخ' },
-  { id: 'cat-machinery', title: 'چرخ خیاطی و دوخت', icon: Cog, query: 'چرخ' },
-  { id: 'cat-production', title: 'تولید و مزدی‌دوزی', icon: Shirt, query: 'دوخت' },
-  { id: 'cat-materials', title: 'خرج‌کار و ملزومات', icon: Tag, query: 'خرج کار' },
-  { id: 'cat-cutting', title: 'الگو و برش', icon: Scissors, query: 'برش' },
-  { id: 'cat-print-embroidery', title: 'چاپ و گلدوزی', icon: Printer, query: 'چاپ' },
-  { id: 'cat-tools', title: 'ابزار و لوازم دوخت', icon: Wrench, query: 'ابزار' },
-  { id: 'cat-ironing', title: 'اتو و تکمیل', icon: Flame, query: 'اتو' },
-  { id: 'cat-dyeing', title: 'رنگرزی و شستشو', icon: Droplets, query: 'رنگرزی' },
-  { id: 'cat-design', title: 'طراحی لباس و مد', icon: Palette, query: 'طراحی' },
-  { id: 'cat-knit', title: 'تریکو و بافت', icon: Boxes, query: 'بافت' },
-  { id: 'cat-leather', title: 'چرم و یراق‌آلات', icon: ShieldCheck, query: 'چرم' },
-  { id: 'cat-packaging', title: 'بسته‌بندی و کاور', icon: Package, query: 'بسته بندی' },
-  { id: 'cat-repair', title: 'تعمیرات ماشین‌آلات', icon: Cpu, query: 'تعمیرات' },
-  { id: 'cat-waste', title: 'ضایعات و مازاد', icon: Trash2, query: 'ضایعات' },
+  { id: 'cat-raw', title: 'مواد اولیه', image: '/assets/categories/raw_materials.jpg', query: 'مواد اولیه' },
+  { id: 'cat-yarn', title: 'نخ و الیاف', image: '/assets/categories/yarns_fibers.jpg', query: 'نخ' },
+  { id: 'cat-fabric', title: 'پارچه و منسوجات', image: '/assets/categories/fabrics.jpg', query: 'پارچه' },
+  { id: 'cat-dyeing', title: 'چاپ و رنگرزی', image: '/assets/categories/dyeing_printing.jpg', query: 'چاپ' },
+  { id: 'cat-leather', title: 'چرم و پوست', image: '/assets/categories/leather.jpg', query: 'چرم' },
+  { id: 'cat-trims', title: 'خرج‌کار و ملزومات', image: '/assets/categories/trims.jpg', query: 'خرج کار' },
+  { id: 'cat-machinery', title: 'ماشین‌آلات و قطعات', image: '/assets/categories/machinery.jpg', query: 'چرخ' },
+  { id: 'cat-finished', title: 'پوشاک و محصولات', image: '/assets/categories/finished_apparel.jpg', query: 'محصول' },
+  { id: 'cat-production', title: 'تولید و مزدی‌دوزی', image: '/assets/categories/production.jpg', query: 'دوخت' },
+  { id: 'cat-repair', title: 'تعمیرات و مهندسی', image: '/assets/categories/repair.jpg', query: 'تعمیرات' },
+  { id: 'cat-design', title: 'طراحی الگو و مد', image: '/assets/categories/pattern_design.jpg', query: 'طراحی' },
+  { id: 'cat-logistics', title: 'تجارت و لجستیک', image: '/assets/categories/logistics.jpg', query: 'لجستیک' },
+  { id: 'cat-education', title: 'آموزش و مهارت', image: '/assets/categories/education.jpg', query: 'آموزش' },
+  { id: 'cat-jobs', title: 'استخدام و نیروی کار', image: '/assets/categories/jobs.jpg', query: 'استخدام' },
+  { id: 'cat-waste', title: 'ضایعات و بازیافت', image: '/assets/categories/waste.jpg', query: 'ضایعات' },
 ];
 
-// 3 High-Impact Visual Billboards (Designed to look like authentic commercial banners like Farsh Gheytaran)
+// Authentic industry billboard banners with zero artificial text overlay
 const BILLBOARD_SLIDES = [
   {
-    id: 'slide-gheytaran',
-    sponsor: 'فرش قیطران',
-    targetUrl: 'https://gheytaran.com',
-    bgGradient: 'from-[#2e0938] via-[#4a125b] to-[#25072e]',
-    authorId: 'user-1',
-    renderGraphic: () => (
-      <div className="w-full h-full relative flex items-center justify-between px-5 sm:px-8 text-white select-none overflow-hidden">
-        {/* Subtle decorative glow */}
-        <div className="absolute -top-10 -right-10 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl" />
-        <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-500/20 rounded-full blur-2xl" />
-
-        {/* Left / Center Typography */}
-        <div className="z-10 space-y-1 sm:space-y-1.5 max-w-[65%]">
-          <span className="text-[11px] sm:text-xs font-semibold text-zinc-300 block">در جهان</span>
-          <div className="text-amber-400 font-extrabold text-xs sm:text-sm tracking-wide">
-            تولیدکننده فرش <span className="text-amber-300 font-black text-sm sm:text-base">۱۵۰۰ شانه</span>
-          </div>
-          <div className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-none pt-0.5">
-            اولین
-          </div>
-        </div>
-
-        {/* Right Graphic: Brand Identity & 3D Podium */}
-        <div className="z-10 flex flex-col items-center justify-center shrink-0">
-          <div className="w-14 h-14 sm:w-18 sm:h-18 flex items-center justify-center mb-1">
-            {/* Golden emblem logo */}
-            <svg viewBox="0 0 100 100" className="w-full h-full text-amber-400 drop-shadow-md fill-current">
-              <path d="M50 5 C60 20, 85 25, 90 45 C95 65, 80 85, 50 95 C20 85, 5 65, 10 45 C15 25, 40 20, 50 5 Z" fill="none" stroke="currentColor" strokeWidth="4" />
-              <path d="M50 20 C55 30, 70 35, 75 50 C80 65, 70 75, 50 82 C30 75, 20 65, 25 50 C30 35, 45 30, 50 20 Z" fill="none" stroke="currentColor" strokeWidth="2.5" />
-              <circle cx="50" cy="50" r="12" fill="currentColor" opacity="0.9" />
-            </svg>
-          </div>
-          <span className="text-[10px] sm:text-xs font-black text-amber-200 tracking-wider">فرش قیطران</span>
-          <span className="text-[8px] sm:text-[9px] text-zinc-300/80 mt-0.5">مفهوم فرش ایرانی</span>
-        </div>
-
-        {/* Podium element at the base */}
-        <div className="absolute -bottom-4 right-10 w-32 h-14 bg-gradient-to-t from-zinc-300 to-zinc-100 rounded-t-lg shadow-2xl opacity-90 transform -skew-x-12 hidden sm:block">
-          <div className="absolute inset-x-0 top-0 h-1 bg-white" />
-        </div>
-      </div>
-    ),
+    id: 'slide-janome-jack',
+    title: 'چرخ خیاطی صنعتی ژانومه و جک',
+    sponsor: 'ماشین‌آلات صنعتی ژانومه / جک',
+    imageUrl: '/src/assets/images/billboard_janome_sewing_1790066137802.jpg',
+    targetUrl: 'https://janome.ir',
+    authorId: 'user-3',
   },
   {
     id: 'slide-boroujerd',
+    title: 'کارخانجات نساجی بروجرد',
     sponsor: 'نساجی بروجرد',
+    imageUrl: '/src/assets/images/billboard_boroujerd_textile_1790066150701.jpg',
     targetUrl: 'https://boroujerdtextile.ir',
-    bgGradient: 'from-[#07172c] via-[#0d2e54] to-[#081b33]',
-    authorId: 'pars-dookht',
-    renderGraphic: () => (
-      <div className="w-full h-full relative flex items-center justify-between px-5 sm:px-8 text-white select-none overflow-hidden">
-        <div className="absolute -top-12 -left-12 w-48 h-48 bg-cyan-500/15 rounded-full blur-2xl" />
-
-        <div className="z-10 space-y-1 sm:space-y-1.5 max-w-[65%]">
-          <span className="text-[10px] sm:text-xs font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/30 px-2 py-0.5 rounded-md inline-block">
-            جشنواره بهاره تأمین مستقیم
-          </span>
-          <div className="text-white font-black text-sm sm:text-lg tracking-tight">
-            پارچه‌های ۱۰۰٪ پنبه و ملحفه‌ای
-          </div>
-          <p className="text-[10px] sm:text-xs text-zinc-300 font-medium">
-            عرض ۲.۴۰ با ضمانت کتبی ثبات رنگ و شستشو • تحویل فوری کارخانه
-          </p>
-        </div>
-
-        <div className="z-10 flex flex-col items-center justify-center shrink-0">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-cyan-500/10 border border-cyan-400/40 flex items-center justify-center mb-1 text-cyan-300 shadow-inner">
-            <Factory className="w-7 h-7 sm:w-9 sm:h-9" />
-          </div>
-          <span className="text-xs sm:text-sm font-black text-cyan-200">نساجی بروجرد</span>
-          <span className="text-[9px] text-zinc-300">۵۰ سال اصالت و کیفیت</span>
-        </div>
-      </div>
-    ),
+    authorId: 'user-2',
   },
   {
-    id: 'slide-jack',
-    sponsor: 'ماشین‌آلات صنعتی جک',
-    targetUrl: 'https://jack-sewing.ir',
-    bgGradient: 'from-[#2a1205] via-[#431407] to-[#1c0802]',
+    id: 'slide-motahari',
+    title: 'پارچه فاستونی و پشمی مطهری',
+    sponsor: 'فاستونی مطهری',
+    imageUrl: '/src/assets/images/billboard_motahari_fabric_1790066160974.jpg',
+    targetUrl: 'https://motaharitex.ir',
     authorId: 'user-1',
-    renderGraphic: () => (
-      <div className="w-full h-full relative flex items-center justify-between px-5 sm:px-8 text-white select-none overflow-hidden">
-        <div className="absolute -bottom-8 -right-8 w-44 h-44 bg-orange-500/20 rounded-full blur-2xl" />
-
-        <div className="z-10 space-y-1 sm:space-y-1.5 max-w-[65%]">
-          <span className="text-[10px] sm:text-xs font-bold text-amber-300 bg-amber-950/80 border border-amber-500/40 px-2 py-0.5 rounded-md inline-block">
-            نسل جدید ماشین‌آلات ۲۰۲۶
-          </span>
-          <div className="text-white font-black text-sm sm:text-lg tracking-tight">
-            چرخ‌های راسته و میان‌دوز کامپیوتری JACK
-          </div>
-          <p className="text-[10px] sm:text-xs text-zinc-300 font-medium">
-            گارانتی ۳۶ ماهه طلایی با موتور سرودایرکت بی‌صدا و سیستم مکش خودکار
-          </p>
-        </div>
-
-        <div className="z-10 flex flex-col items-center justify-center shrink-0">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-orange-500/15 border border-orange-400/40 flex items-center justify-center mb-1 text-orange-300 shadow-inner">
-            <Cog className="w-7 h-7 sm:w-9 sm:h-9" />
-          </div>
-          <span className="text-xs sm:text-sm font-black text-orange-200">نمایندگی مرکزی جک</span>
-          <span className="text-[9px] text-zinc-300">تجهیز خطوط تولید</span>
-        </div>
-      </div>
-    ),
   },
 ];
 
@@ -203,6 +119,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
   onSelectAd,
   onSelectAuthor,
   onSelectCategory,
+  onCreateListing,
 }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isMutedMap, setIsMutedMap] = useState<Record<string, boolean>>({});
@@ -210,13 +127,79 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
-  const [reactionsMap, setReactionsMap] = useState<Record<string, 'up' | 'down' | null>>({});
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
-  const handleReaction = (adId: string, type: 'up' | 'down') => {
-    setReactionsMap((prev) => ({
+  // Billboard Touch Swipe Handlers (Swipe left/right to change billboard)
+  const [billboardTouchStart, setBillboardTouchStart] = useState<number | null>(null);
+  const [billboardTouchEnd, setBillboardTouchEnd] = useState<number | null>(null);
+
+  const handleBillboardTouchStart = (e: React.TouchEvent) => {
+    setBillboardTouchEnd(null);
+    setBillboardTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleBillboardTouchMove = (e: React.TouchEvent) => {
+    setBillboardTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleBillboardTouchEnd = () => {
+    if (billboardTouchStart === null || billboardTouchEnd === null) return;
+    const distance = billboardTouchStart - billboardTouchEnd;
+    if (distance > 35) {
+      // Swiped Left -> Next slide
+      setCurrentSlideIndex((prev) => (prev + 1) % BILLBOARD_SLIDES.length);
+    } else if (distance < -35) {
+      // Swiped Right -> Previous slide
+      setCurrentSlideIndex((prev) => (prev - 1 + BILLBOARD_SLIDES.length) % BILLBOARD_SLIDES.length);
+    }
+    setBillboardTouchStart(null);
+    setBillboardTouchEnd(null);
+  };
+
+  // Ad Image Carousel Touch Swipe Handlers (Swipe left/right to change images)
+  const [adTouchMap, setAdTouchMap] = useState<Record<string, { start: number | null; end: number | null; moved: boolean }>>({});
+
+  const handleAdTouchStart = (adId: string, e: React.TouchEvent) => {
+    setAdTouchMap((prev) => ({
       ...prev,
-      [adId]: prev[adId] === type ? null : type,
+      [adId]: { start: e.targetTouches[0].clientX, end: null, moved: false },
+    }));
+  };
+
+  const handleAdTouchMove = (adId: string, e: React.TouchEvent) => {
+    setAdTouchMap((prev) => ({
+      ...prev,
+      [adId]: {
+        start: prev[adId]?.start ?? null,
+        end: e.targetTouches[0].clientX,
+        moved: true,
+      },
+    }));
+  };
+
+  const handleAdTouchEnd = (ad: AdItem) => {
+    const touch = adTouchMap[ad.id];
+    if (touch && touch.start !== null && touch.end !== null && touch.moved) {
+      const distance = touch.start - touch.end;
+      if (Math.abs(distance) > 35) {
+        if (distance > 35) {
+          // Swipe left -> next image
+          setActiveImageIndexMap((prev) => ({
+            ...prev,
+            [ad.id]: ((prev[ad.id] || 0) + 1) % Math.max(ad.images.length, 1),
+          }));
+        } else if (distance < -35) {
+          // Swipe right -> prev image
+          setActiveImageIndexMap((prev) => ({
+            ...prev,
+            [ad.id]: ((prev[ad.id] || 0) - 1 + ad.images.length) % Math.max(ad.images.length, 1),
+          }));
+        }
+      }
+    }
+    setAdTouchMap((prev) => ({
+      ...prev,
+      [ad.id]: { start: null, end: null, moved: false },
     }));
   };
 
@@ -296,60 +279,54 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
         </div>
       )}
 
-      {/* ۱. نوار استوری‌ها (بالای بیلبورد - دقیقاً مطابق ساختار دایره‌ای با نشان + در عکس ارسالی) */}
+      {/* ۱. نوار استوری‌ها (بدون دکمه ایجاد استوری - اولین استوری تاروپود رسمی و ثابت است) */}
       <section className="bg-white px-3 py-3 border-b border-zinc-100">
         <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
-          
-          {/* دکمه ایجاد استوری با حلقه خط‌چین و علامت + قرمز */}
-          <button
-            onClick={() => setShowStoryModal(true)}
-            className="flex flex-col items-center gap-1.5 shrink-0 group focus:outline-none"
-          >
-            <div className="relative">
-              <div className="w-14 h-14 rounded-full border-2 border-dashed border-zinc-400/80 p-0.5 flex items-center justify-center bg-white group-hover:border-orange-500 transition-colors">
-                <div className="w-full h-full rounded-full bg-zinc-50 flex items-center justify-center text-orange-600">
-                  <Shirt className="w-6 h-6 stroke-[2]" />
+          {MOCK_STORIES_10.map((st, index) => {
+            const isTaropodOfficial = st.id === 'story-taropod' || index === 0;
+            return (
+              <button
+                key={st.id}
+                onClick={() => setActiveStoryIndex(index)}
+                className="flex flex-col items-center gap-1.5 shrink-0 group focus:outline-none relative"
+              >
+                <div
+                  className={`w-14 h-14 rounded-full p-0.5 flex items-center justify-center bg-white group-hover:scale-105 transition-transform ${
+                    isTaropodOfficial
+                      ? 'border-2 border-amber-500 ring-2 ring-amber-200/80 shadow-xs'
+                      : st.mediaType === 'video'
+                      ? 'border-2 border-orange-600 ring-2 ring-orange-100'
+                      : 'border-2 border-zinc-300'
+                  }`}
+                >
+                  <img
+                    src={st.authorAvatar}
+                    alt={st.authorName}
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 </div>
-              </div>
-              <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-bold border-2 border-white shadow-xs">
-                +
-              </span>
-            </div>
-            <span className="text-[11px] font-bold text-zinc-800">ایجاد استوری</span>
-          </button>
-
-          {/* استوری‌های برتر صنعت نساجی برگرفته از ۱۰ استوری فعال */}
-          {MOCK_STORIES.map((st, index) => (
-            <button
-              key={st.id}
-              onClick={() => setActiveStoryIndex(index)}
-              className="flex flex-col items-center gap-1.5 shrink-0 group focus:outline-none relative"
-            >
-              <div className={`w-14 h-14 rounded-full border-2 ${st.mediaType === 'video' ? 'border-orange-600 ring-2 ring-orange-100' : 'border-amber-500'} p-0.5 flex items-center justify-center bg-white group-hover:scale-105 transition-transform`}>
-                <img
-                  src={st.authorAvatar}
-                  alt={st.authorName}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              </div>
-              {st.mediaType === 'video' && (
-                <span className="absolute top-0 right-0 bg-orange-600 text-white text-[9px] font-bold px-1 py-0.2 rounded-full border border-white shadow-xs flex items-center gap-0.5">
-                  <Play className="w-2 h-2 fill-white" />
-                  <span>{st.durationSeconds}s</span>
-                </span>
-              )}
-              <span className="text-[11px] font-medium text-zinc-700 whitespace-nowrap max-w-[68px] truncate text-center">
-                {st.authorName}
-              </span>
-            </button>
-          ))}
+                <div className="flex items-center gap-0.5 max-w-[74px]">
+                  <span
+                    className={`text-[11px] truncate text-center ${
+                      isTaropodOfficial ? 'font-black text-amber-700' : 'font-medium text-zinc-700'
+                    }`}
+                  >
+                    {st.authorName}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      {/* ۲. جایگاه بنر بیلبوردی (فول‌وید، چسبیده به کناره‌ها بدون حاشیه و قاب اضافی طبق درخواست و عکس) */}
+      {/* ۲. جایگاه بنر بیلبوردی (تصویر واقعی تبلیغاتی صنعت، تمام‌صفحه بدون متن مصنوعی روی آن، دارای قابلیت سوایپ لمسی) */}
       <section className="w-full relative">
         <div
           onClick={() => handleBillboardClick(BILLBOARD_SLIDES[currentSlideIndex])}
+          onTouchStart={handleBillboardTouchStart}
+          onTouchMove={handleBillboardTouchMove}
+          onTouchEnd={handleBillboardTouchEnd}
           className="w-full aspect-[2.1/1] sm:aspect-[2.3/1] overflow-hidden relative cursor-pointer select-none group bg-zinc-950"
         >
           {BILLBOARD_SLIDES.map((slide, idx) => {
@@ -357,17 +334,22 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
             return (
               <div
                 key={slide.id}
-                className={`absolute inset-0 bg-gradient-to-r ${slide.bgGradient} transition-opacity duration-700 ${
+                className={`absolute inset-0 transition-opacity duration-700 ${
                   isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
                 }`}
               >
-                {slide.renderGraphic()}
+                <img
+                  src={slide.imageUrl}
+                  alt={slide.title}
+                  className="w-full h-full object-cover select-none pointer-events-none"
+                  referrerPolicy="no-referrer"
+                />
               </div>
             );
           })}
 
-          {/* نقطه کنترل اسلاید (پجینیشن مینیمال در مرکز پایین بنر، عین عکس) */}
-          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+          {/* نقطه کنترل اسلاید (پجینیشن مینیمال در مرکز پایین بنر بیلبورد) */}
+          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/30 backdrop-blur-xs px-2 py-0.5 rounded-full">
             {BILLBOARD_SLIDES.map((_, dotIdx) => (
               <button
                 key={dotIdx}
@@ -378,7 +360,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
                 className={`transition-all rounded-full ${
                   dotIdx === currentSlideIndex
                     ? 'w-2 h-2 bg-orange-500'
-                    : 'w-1.5 h-1.5 bg-white/50 hover:bg-white'
+                    : 'w-1.5 h-1.5 bg-white/60 hover:bg-white'
                 }`}
                 title={`بنر ${dotIdx + 1}`}
               />
@@ -387,29 +369,32 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
         </div>
       </section>
 
-      {/* ۳. شبکه دسته‌بندی‌های اصلی (۴ ستونه، کاملاً مینیمال، بدون قاب مربعی و رنگ پس‌زمینه، دقیقاً طبق عکس ارسالی) */}
-      <section className="bg-white py-6 px-3 border-b border-zinc-100">
-        <div className="grid grid-cols-4 gap-y-7 gap-x-2">
-          {MINIMAL_CATEGORIES.map((cat) => {
-            const Icon = cat.icon;
-            return (
-              <button
-                key={cat.id}
-                id={`cat-${cat.id}`}
-                onClick={() => onSelectCategory(cat.query)}
-                className="flex flex-col items-center justify-center text-center group focus:outline-none transition-transform active:scale-95"
-              >
-                {/* آیکون خطی تک‌رنگ نارنجی سازمانی (بدون کادر، بدون پس‌زمینه مربعی) */}
-                <div className="w-9 h-9 flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
-                  <Icon className="w-7 h-7 stroke-[1.8]" />
-                </div>
-                {/* عنوان تمیز زیر آیکون */}
-                <span className="text-[11px] sm:text-xs font-semibold text-zinc-800 text-center leading-tight mt-1.5 group-hover:text-orange-600 transition-colors">
-                  {cat.title}
-                </span>
-              </button>
-            );
-          })}
+      {/* ۳. شبکه دسته‌بندی‌های اصلی (کاملاً بدون قاب، بدون کادر و حاشیه، یکدست با آیکون‌های کانسپت ارسالی) */}
+      <section className="bg-white py-5 px-2 border-b border-zinc-100">
+        <div className="grid grid-cols-4 sm:grid-cols-5 gap-y-5 gap-x-1">
+          {MINIMAL_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              id={`cat-${cat.id}`}
+              onClick={() => onSelectCategory(cat.query)}
+              className="flex flex-col items-center justify-start text-center group focus:outline-none transition-transform active:scale-95"
+            >
+              {/* آیکون کاملاً بدون کادر و قاب، شناور روی صفحه */}
+              <div className="w-13 h-13 sm:w-15 sm:h-15 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <img
+                  src={cat.image}
+                  alt={cat.title}
+                  className="w-full h-full object-contain pointer-events-none select-none"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+
+              {/* عنوان تمیز زیر آیکون */}
+              <span className="text-[11px] sm:text-xs font-semibold text-zinc-800 text-center leading-tight mt-1.5 group-hover:text-orange-600 transition-colors line-clamp-1">
+                {cat.title}
+              </span>
+            </button>
+          ))}
         </div>
       </section>
 
@@ -420,7 +405,9 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
             <span className="w-2 h-2 rounded-full bg-orange-600" />
             <span>تازه‌ترین آگهی‌ها و سفارشات صنعت نساجی</span>
           </h2>
-          <span className="text-[11px] text-zinc-400">به‌روزرسانی لحظه‌ای</span>
+          <span className="text-[11px] font-medium text-zinc-400 bg-zinc-50 border border-zinc-200/60 px-2 py-0.5 rounded-md">
+            به‌روزرسانی لحظه‌ای
+          </span>
         </div>
 
         {isLoading ? (
@@ -457,7 +444,6 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
           ads.map((ad) => {
             const isBookmarked = bookmarkedIds.includes(ad.id);
             const activeImgIdx = activeImageIndexMap[ad.id] || 0;
-            const currentReaction = reactionsMap[ad.id] || null;
 
             return (
               <article
@@ -466,9 +452,9 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
                 onClick={() => onSelectAd(ad)}
                 className="bg-white cursor-pointer select-none"
               >
-                {/* بخش اول: هدر بالای کارت (پروفایل کسب‌وکار در راست + برچسب دسته‌بندی و زمان در چپ، عین تصویر) */}
+                {/* بخش اول: هدر بالای کارت (پروفایل کسب‌وکار + نشان آنلاین در راست + برچسب دسته‌بندی در چپ) */}
                 <div className="px-4 py-3 flex items-center justify-between">
-                  {/* سمت راست: آواتار گرد + نام کسب‌وکار + عنوان تخصص/فعالیت */}
+                  {/* سمت راست: آواتار گرد با نشان وضعیت آنلاین + نام کسب‌وکار + عنوان تخصص/فعالیت */}
                   <div
                     onClick={(e) => {
                       e.stopPropagation();
@@ -482,32 +468,42 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
                         alt={ad.authorName}
                         className="w-11 h-11 rounded-full object-cover border border-zinc-200 group-hover/author:ring-2 ring-orange-500 transition-all"
                       />
+                      {/* نشان دکمه‌ای استاندارد آنلاین / آفلاین روی تصویر لوگو */}
+                      <span
+                        className={`w-3 h-3 rounded-full border-2 border-white absolute bottom-0 right-0 ring-1 shadow-xs ${
+                          ad.isOnline !== false
+                            ? 'bg-emerald-500 ring-emerald-500/20'
+                            : 'bg-rose-500 ring-rose-500/20'
+                        }`}
+                        title={ad.isOnline !== false ? 'آنلاین' : 'آفلاین'}
+                      />
                       {ad.authorVerified && (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-orange-600 bg-white rounded-full absolute -bottom-0.5 -left-0.5 fill-orange-100" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-orange-600 bg-white rounded-full absolute -top-0.5 -left-0.5 fill-orange-100" />
                       )}
                     </div>
                     <div>
-                      <h4 className="text-xs sm:text-sm font-black text-zinc-900 group-hover/author:text-orange-700 transition-colors leading-tight">
-                        {ad.authorName}
-                      </h4>
-                      <p className="text-[11px] text-zinc-400 font-medium mt-0.5">
-                        {ad.authorSpecialty || ad.category}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="text-xs sm:text-sm font-black text-zinc-900 group-hover/author:text-orange-700 transition-colors leading-tight">
+                          {ad.authorName}
+                        </h4>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[11px] text-zinc-400 font-medium">
+                          {ad.authorSpecialty || ad.category}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* سمت چپ: کادر باریک نوع آگهی/دسته‌بندی + زمان درج آگهی زیر آن */}
+                  {/* سمت چپ: کادر باریک نوع آگهی/دسته‌بندی */}
                   <div className="flex flex-col items-end gap-1">
-                    <span className="text-[11px] font-medium text-zinc-500 border border-zinc-300/90 rounded px-2.5 py-0.5 whitespace-nowrap bg-zinc-50/50">
+                    <span className="text-[11px] font-medium text-zinc-600 border border-zinc-300/90 rounded px-2.5 py-0.5 whitespace-nowrap bg-zinc-50/70">
                       {ad.category}
-                    </span>
-                    <span className="text-[10px] text-zinc-400 font-normal">
-                      {ad.createdAtText || '۳ ساعت پیش'}
                     </span>
                   </div>
                 </div>
 
-                {/* بخش دوم: مدیا تمام‌عرض (پشتیبانی هوشمند از ویدیو/عکس با نسبت ابعاد عمودی، افقی یا مربعی) */}
+                {/* بخش دوم: مدیا تمام‌عرض با قابلیت لمسی سوایپ و کلیک برای مشاهده در اندازه کامل */}
                 {(() => {
                   const aspectClass = ad.aspectRatio === 'vertical'
                     ? 'aspect-[4/5] max-h-[540px]'
@@ -516,7 +512,12 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
                       : 'aspect-square';
 
                   return (
-                    <div className={`relative w-full ${aspectClass} bg-zinc-950 overflow-hidden flex items-center justify-center`}>
+                    <div
+                      onTouchStart={(e) => handleAdTouchStart(ad.id, e)}
+                      onTouchMove={(e) => handleAdTouchMove(ad.id, e)}
+                      onTouchEnd={() => handleAdTouchEnd(ad)}
+                      className={`relative w-full ${aspectClass} bg-zinc-950 overflow-hidden flex items-center justify-center`}
+                    >
                       {playingVideoId === ad.id && ad.hasVideo && ad.videoUrl ? (
                         <div
                           className="w-full h-full relative"
@@ -555,9 +556,11 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
                           />
 
                           {/* بج تعداد عکس در بالا چپ */}
-                          <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-xs text-white text-[11px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 pointer-events-none">
-                            <span>{(activeImgIdx || 0) + 1}/{Math.max(ad.images.length, 1)}</span>
-                          </div>
+                          {ad.images.length > 1 && (
+                            <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-xs text-white text-[11px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 pointer-events-none">
+                              <span>{(activeImgIdx || 0) + 1}/{Math.max(ad.images.length, 1)}</span>
+                            </div>
+                          )}
 
                           {/* بج نوع مدیا و کیفیت ۱۰۸۰p FHD در بالا راست */}
                           {ad.hasVideo ? (
@@ -596,78 +599,23 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
                           )}
                         </>
                       )}
-
-                      {/* دکمه‌های اسلاید برای تصاویر چندگانه */}
-                      {ad.images.length > 1 && (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveImageIndexMap((prev) => ({
-                                ...prev,
-                                [ad.id]: ((prev[ad.id] || 0) - 1 + ad.images.length) % ad.images.length,
-                              }));
-                            }}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors"
-                          >
-                            <ChevronLeft className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveImageIndexMap((prev) => ({
-                                ...prev,
-                                [ad.id]: ((prev[ad.id] || 0) + 1) % ad.images.length,
-                              }));
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors"
-                          >
-                            <ChevronRight className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
                     </div>
                   );
                 })()}
 
-                {/* بخش سوم: نوار اکشن زیر عکس (نشان، لوکیشن، اشتراک در چپ | نقطه‌های اسلاید در وسط | دیس‌لایک و لایک در راست) */}
+                {/* بخش سوم: نوار اکشن زیر مدیا (زمان انتشار در راست | نقاط اسلاید در وسط | سیو و شیر در چپ) */}
                 <div className="px-4 py-2.5 flex items-center justify-between border-b border-zinc-100">
-                  {/* دکمه‌های تعاملی سمت چپ: بوک‌مارک، لوکیشن، شیر */}
-                  <div className="flex items-center gap-3 text-zinc-500">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleBookmark(ad.id);
-                      }}
-                      className="hover:text-zinc-900 transition-colors p-0.5 focus:outline-none"
-                      title="نشان کردن"
-                    >
-                      <Bookmark className={`w-5 h-5 ${isBookmarked ? 'fill-zinc-900 text-zinc-900' : 'stroke-[1.6]'}`} />
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        alert(`موقعیت کارگاه/فروشگاه: ${ad.province}، ${ad.city} ${ad.location?.areaName || ''}`);
-                      }}
-                      className="hover:text-zinc-900 transition-colors p-0.5 focus:outline-none"
-                      title="مشاهده موقعیت روی نقشه"
-                    >
-                      <MapPin className="w-5 h-5 stroke-[1.6]" />
-                    </button>
-
-                    <button
-                      onClick={(e) => handleShare(ad, e)}
-                      className="hover:text-zinc-900 transition-colors p-0.5 focus:outline-none"
-                      title="اشتراک‌گذاری"
-                    >
-                      <Share2 className="w-5 h-5 stroke-[1.6]" />
-                    </button>
+                  {/* سمت راست: زمان انتشار آگهی / تاریخ */}
+                  <div className="flex items-center gap-1.5 text-zinc-500">
+                    <Clock className="w-3.5 h-3.5 text-zinc-400 stroke-[1.8]" />
+                    <span className="text-[11px] font-medium text-zinc-500">
+                      {ad.createdAtText || '۳ ساعت پیش'}
+                    </span>
                   </div>
 
-                  {/* نقطه‌های وسط (اسلایدر عکس) */}
+                  {/* نقطه‌های وسط (اسلایدر عکس با امکان سوایپ لمسی) */}
                   <div className="flex items-center gap-1.5">
-                    {[0, 1, 2, 3, 4].map((dotIdx) => (
+                    {ad.images.slice(0, 5).map((_, dotIdx) => (
                       <span
                         key={dotIdx}
                         className={`rounded-full transition-all ${
@@ -679,37 +627,32 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
                     ))}
                   </div>
 
-                  {/* دکمه‌های سمت راست: دیس‌لایک و لایک */}
+                  {/* دکمه‌های سمت چپ: نشان کردن (سیو) و اشتراک‌گذاری */}
                   <div className="flex items-center gap-3 text-zinc-500">
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleReaction(ad.id, 'down');
+                        onToggleBookmark(ad.id);
                       }}
-                      className={`hover:text-zinc-900 transition-colors p-0.5 focus:outline-none ${
-                        currentReaction === 'down' ? 'text-zinc-900' : ''
-                      }`}
-                      title="عدم علاقه"
+                      className="hover:text-zinc-900 transition-colors p-0.5 focus:outline-none"
+                      title="نشان کردن (ذخیره)"
                     >
-                      <ThumbsDown className={`w-5 h-5 ${currentReaction === 'down' ? 'fill-zinc-900 text-zinc-900' : 'stroke-[1.6]'}`} />
+                      <Bookmark className={`w-5 h-5 ${isBookmarked ? 'fill-zinc-900 text-zinc-900' : 'stroke-[1.6]'}`} />
                     </button>
 
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleReaction(ad.id, 'up');
-                      }}
-                      className={`hover:text-orange-600 transition-colors p-0.5 focus:outline-none ${
-                        currentReaction === 'up' ? 'text-orange-600' : ''
-                      }`}
-                      title="پسندیدن"
+                      type="button"
+                      onClick={(e) => handleShare(ad, e)}
+                      className="hover:text-zinc-900 transition-colors p-0.5 focus:outline-none"
+                      title="اشتراک‌گذاری"
                     >
-                      <ThumbsUp className={`w-5 h-5 ${currentReaction === 'up' ? 'fill-orange-600 text-orange-600' : 'stroke-[1.6]'}`} />
+                      <Share2 className="w-5 h-5 stroke-[1.6]" />
                     </button>
                   </div>
                 </div>
 
-                {/* بخش چهارم: عنوان و جدول مشخصات کلیدی (قیمت کل، قیمت واحد، حجم/متراژ، موقعیت با خطوط جداکننده نازک) */}
+                {/* بخش چهارم: عنوان و جدول مشخصات کلیدی + دکمه رسمی مشاهده جزئیات آگهی */}
                 <div className="px-4 pt-3 pb-4">
                   {/* عنوان بزرگ آگهی */}
                   <h3 className="text-sm sm:text-base font-black text-zinc-900 text-right leading-snug mb-3">
@@ -750,6 +693,22 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
                       </span>
                     </div>
                   </div>
+
+                  {/* دکمه رسمی و اختصاصی مشاهده جزئیات آگهی و اطلاعات تماس */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectAd(ad);
+                    }}
+                    className="w-full mt-3 py-2.5 px-4 rounded-xl bg-zinc-50 hover:bg-orange-50 border border-zinc-200/90 hover:border-orange-300 text-zinc-800 hover:text-orange-700 text-xs font-bold flex items-center justify-between transition-all group/btn shadow-2xs cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-orange-600 group-hover/btn:scale-125 transition-transform" />
+                      <span>مشاهده جزئیات کامل آگهی و اطلاعات تماس</span>
+                    </span>
+                    <ChevronLeft className="w-4 h-4 text-zinc-400 group-hover/btn:text-orange-600 group-hover/btn:-translate-x-1 transition-all" />
+                  </button>
                 </div>
               </article>
             );

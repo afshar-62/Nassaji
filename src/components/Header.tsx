@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Sparkles, Mail, Menu, ChevronDown, X } from 'lucide-react';
+import { Search, MapPin, Sparkles, Mail, Menu, ChevronDown, X, Palette } from 'lucide-react';
 import { LocationHierarchyPickerModal } from './LocationHierarchyPickerModal';
 
 interface HeaderProps {
@@ -11,6 +11,7 @@ interface HeaderProps {
   onOpenMessages: () => void;
   onOpenSettings: () => void;
   onOpenBookmarks: () => void;
+  onOpenPaletteModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -22,6 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMessages,
   onOpenSettings,
   onOpenBookmarks,
+  onOpenPaletteModal,
 }) => {
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -146,6 +148,19 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <span>آگهی‌های نشان‌شده</span>
                   <span className="text-[10px] bg-zinc-200 px-1.5 py-0.5 rounded-md text-zinc-600">ذخیره‌ها</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenPaletteModal?.();
+                  }}
+                  className="w-full text-right p-2.5 rounded-xl text-xs font-semibold text-zinc-700 hover:bg-orange-50 text-orange-950 transition-colors flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Palette className="w-3.5 h-3.5 text-orange-600" />
+                    <span>کالیته‌های رنگی برند تاروپود</span>
+                  </span>
+                  <span className="text-[10px] bg-orange-100 text-orange-800 font-bold px-1.5 py-0.5 rounded-md">۵ تم زنده</span>
                 </button>
                 <button
                   onClick={() => {

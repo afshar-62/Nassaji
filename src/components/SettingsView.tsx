@@ -23,14 +23,21 @@ import {
   TrendingUp,
   Download,
   Package,
+  FileCode,
+  Sparkles,
+  Palette,
 } from 'lucide-react';
 import { AdItem } from '../types';
+import { DownloadSourceButton } from './DownloadSourceButton.tsx';
+import { TAROPOD_PALETTES } from '../utils/themePalette.ts';
 
 interface SettingsViewProps {
   onOpenMessages: () => void;
   onOpenBookmarks: () => void;
   onOpenProfile: () => void;
   bookmarkedAdsCount: number;
+  onOpenPaletteModal?: () => void;
+  activePaletteId?: string;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -38,6 +45,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onOpenBookmarks,
   onOpenProfile,
   bookmarkedAdsCount,
+  onOpenPaletteModal,
+  activePaletteId = 'palette-1',
 }) => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState(1500000);
@@ -48,6 +57,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   // Identity verification state
   const [verificationSubmitted, setVerificationSubmitted] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+
+  // Story creation state
+  const [storyMediaType, setStoryMediaType] = useState<'image' | 'video'>('image');
+  const [storyCaption, setStoryCaption] = useState('');
+  const [storyMediaUrl, setStoryMediaUrl] = useState('');
+  const [storySubmitting, setStorySubmitting] = useState(false);
+  const [storySuccess, setStorySuccess] = useState(false);
 
   return (
     <div className="pb-24 max-w-md mx-auto space-y-4 px-3 pt-2">
@@ -141,15 +157,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <span className="text-[10px] text-zinc-400 mt-0.5">بازدید آگهی‌ها</span>
           </button>
 
-          {/* ۵. رزرو استوری */}
+          {/* ۵. ثبت و رزرو استوری */}
           <button
+            id="settings-create-story-btn"
             onClick={() => setActiveModal('story')}
-            className="p-3 rounded-2xl bg-white border border-zinc-200 shadow-2xs hover:border-amber-400 hover:bg-amber-50/20 transition-all flex flex-col items-center text-center group"
+            className="p-3 rounded-2xl bg-white border border-zinc-200 shadow-2xs hover:border-orange-500 hover:bg-orange-50/20 transition-all flex flex-col items-center text-center group cursor-pointer"
           >
             <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
               <Flame className="w-5 h-5" />
             </div>
-            <span className="text-xs font-bold text-zinc-800">رزرو استوری</span>
+            <span className="text-xs font-bold text-zinc-800">ثبت استوری</span>
             <span className="text-[10px] text-orange-600 font-semibold mt-0.5">ویترین ۲۴ ساعته</span>
           </button>
 
@@ -166,6 +183,37 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </button>
         </div>
       </section>
+
+      {/* بخش تست و تغییر کالیته رنگی برند تاروپود */}
+      <div className="bg-white rounded-2xl border border-zinc-200 p-3.5 shadow-2xs">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+              <Palette className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-xs font-black text-zinc-900">کالیته رنگی پلتفرم تاروپود</h4>
+                <span className="text-[10px] bg-orange-100 text-orange-800 font-bold px-2 py-0.5 rounded-full">
+                  ۵ تم صنعتی زنده
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-500 mt-0.5">
+                کالیته فعال: {TAROPOD_PALETTES.find((p) => p.id === activePaletteId)?.name || 'کالیته ۱'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onOpenPaletteModal?.()}
+            className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold rounded-xl transition-colors shrink-0 cursor-pointer flex items-center gap-1"
+          >
+            <span>تغییر کالیته</span>
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
 
       {/* 2. Highlight Banner: "احراز هویت" (بخش احراز هویت با برچسب و دکمه آپلود مدارک طبق وایرفریم ۶) */}
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300/80 rounded-2xl p-4 shadow-2xs">
@@ -315,31 +363,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </p>
 
         <div className="space-y-2">
-          {/* دکمه دانلود سورس پروفایل */}
-          <a
-            href="/api/v1/download/profile-module.zip"
-            download="taropod-profile-module.zip"
-            className="w-full p-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center justify-between shadow-xs transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              <span>دانلود ZIP کدهای ماژول پروفایل و هویت (Profile Slice)</span>
-            </div>
-            <span className="text-[10px] bg-amber-700/60 px-2 py-0.5 rounded text-amber-100">۴۵ کیلوبایت</span>
-          </a>
+          {/* دکمه دانلود مستقیم فایل ZIP */}
+          <DownloadSourceButton label="دانلود فوری فایل ZIP سورس‌کد (کلیک کنید)" />
 
-          {/* دکمه دانلود سورس کل پروژه */}
-          <a
-            href="/api/v1/download/full-source.zip"
-            download="taropod-full-source.zip"
-            className="w-full p-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-xs font-bold flex items-center justify-between shadow-xs transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              <span>دانلود ZIP کل سورس پروژه (Full Project Monolith)</span>
-            </div>
-            <span className="text-[10px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">۲۲۵ کیلوبایت</span>
-          </a>
+          <div className="grid grid-cols-2 gap-2">
+            <a
+              href="/taropod_source_bundle.txt"
+              download="taropod_source_code.txt"
+              className="p-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+            >
+              <Download className="w-3.5 h-3.5 text-zinc-300" />
+              <span>دانلود فایل متنی کدها (.txt)</span>
+            </a>
+
+            <a
+              href="/source-viewer.html"
+              target="_blank"
+              rel="noreferrer"
+              className="p-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 border border-amber-500/40 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+            >
+              <FileCode className="w-3.5 h-3.5" />
+              <span>مشاهده و کپی کل سورس‌کد</span>
+            </a>
+          </div>
         </div>
       </section>
 
@@ -531,6 +577,154 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   className="w-full bg-zinc-900 text-white text-xs font-bold py-2.5 rounded-xl"
                 >
                   ارسال بازخورد
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Story Creation & Reservation Modal */}
+      {activeModal === 'story' && (
+        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm max-h-[85vh] overflow-y-auto p-4 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
+              <div className="flex items-center gap-2 text-orange-600">
+                <Flame className="w-5 h-5" />
+                <h3 className="text-xs font-black text-zinc-900">ثبت استوری در ویترین ۲۴ ساعته</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setActiveModal(null);
+                  setStorySuccess(false);
+                }}
+                className="p-1 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {storySuccess ? (
+              <div className="text-center py-6 space-y-3">
+                <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
+                <h4 className="text-sm font-black text-zinc-900">استوری با موفقیت ثبت و منتشر شد!</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  استوری کارگاه شما تا ۲۴ ساعت آینده در بالای صفحه اول برای تمامی فعالان صنف نساجی نمایش داده خواهد شد.
+                </p>
+                <button
+                  onClick={() => {
+                    setActiveModal(null);
+                    setStorySuccess(false);
+                    setStoryCaption('');
+                    setStoryMediaUrl('');
+                  }}
+                  className="w-full bg-zinc-900 text-white text-xs font-bold py-2.5 rounded-xl transition-colors mt-2 cursor-pointer"
+                >
+                  بستن
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3 text-right">
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  با ثبت استوری، آخرین تولیدات، تخفیف‌های فوری طاقه‌ای یا نیازهای مبرم کارگاه خود را در بالای صفحه نخست نمایش دهید.
+                </p>
+
+                {/* انتخاب نوع محتوا */}
+                <div>
+                  <label className="text-xs font-bold text-zinc-700 block mb-1.5">نوع محتوا:</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setStoryMediaType('image')}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                        storyMediaType === 'image'
+                          ? 'border-orange-500 bg-orange-50 text-orange-700'
+                          : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+                      }`}
+                    >
+                      تصویر / عکس نمونه‌کار
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStoryMediaType('video')}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                        storyMediaType === 'video'
+                          ? 'border-orange-500 bg-orange-50 text-orange-700'
+                          : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+                      }`}
+                    >
+                      ویدیو کوتاه خط تولید
+                    </button>
+                  </div>
+                </div>
+
+                {/* آدرس اینترنتی یا بارگذاری رسانه */}
+                <div>
+                  <label className="text-xs font-bold text-zinc-700 block mb-1.5">تصویر یا فایل استوری:</label>
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={storyMediaUrl}
+                      onChange={(e) => setStoryMediaUrl(e.target.value)}
+                      placeholder="آدرس اینترنتی عکس یا ویدیو (اختیاری)"
+                      className="w-full text-xs p-2.5 rounded-xl border border-zinc-200 focus:outline-none focus:border-orange-500"
+                    />
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                      <span className="text-[10px] text-zinc-400 shrink-0">نمونه‌های سریع:</span>
+                      <button
+                        type="button"
+                        onClick={() => setStoryMediaUrl('https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800')}
+                        className="text-[10px] px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-700 shrink-0 cursor-pointer"
+                      >
+                        پارچه‌های جدید
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStoryMediaUrl('https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800')}
+                        className="text-[10px] px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-700 shrink-0 cursor-pointer"
+                      >
+                        کارگاه دوخت
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* متن استوری */}
+                <div>
+                  <label className="text-xs font-bold text-zinc-700 block mb-1">توضیح یا شعار استوری:</label>
+                  <textarea
+                    rows={2}
+                    value={storyCaption}
+                    onChange={(e) => setStoryCaption(e.target.value)}
+                    placeholder="مثال: رسیدن پارت جدید نخ کج‌راه رنگ طوسی با قیمت درب کارخانه..."
+                    className="w-full text-xs p-2.5 rounded-xl border border-zinc-200 focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-[11px] text-amber-900 space-y-1">
+                  <div className="flex items-center gap-1 font-bold">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                    <span>سهمیه رایگان روزانه فعال است</span>
+                  </div>
+                  <p className="text-amber-800 text-[10px] leading-relaxed">
+                    کارگاه‌های تایید هویت شده روزانه ۱ استوری رایگان در صفحه اصلی دریافت می‌کنند.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={storySubmitting}
+                  onClick={() => {
+                    setStorySubmitting(true);
+                    setTimeout(() => {
+                      setStorySubmitting(false);
+                      setStorySuccess(true);
+                    }, 800);
+                  }}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold py-2.5 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Flame className="w-4 h-4" />
+                  <span>{storySubmitting ? 'در حال انتشار...' : 'انتشار فوری استوری در ویترین تاروپود'}</span>
                 </button>
               </div>
             )}

@@ -152,6 +152,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const workGroup = publicProfile?.workGroup || 'فروشگاه / منسوجات';
   const activityDomain = publicProfile?.activityDomain || legacyProfile?.activity || 'لوازم و پارچه';
   const isVerified = publicProfile?.isVerified ?? legacyProfile?.isVerified ?? true;
+  const isOnline = legacyProfile?.isOnline ?? true;
   const rating = publicProfile?.rating || legacyProfile?.rating || 4.9;
 
   // Contact info
@@ -304,6 +305,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 className="w-full h-full object-cover"
               />
             </div>
+            {/* نشانگر آنلاین / آفلاین بودن کسب‌وکار روی تصویر لوگوی پروفایل */}
+            <span
+              className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-xs"
+              title={isOnline ? 'آنلاین' : 'آفلاین'}
+            >
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  isOnline ? 'bg-emerald-500' : 'bg-rose-500'
+                }`}
+              />
+            </span>
             {isVerified && (
               <span
                 className="absolute bottom-0 left-0 bg-white rounded-full p-0.5 shadow-xs"

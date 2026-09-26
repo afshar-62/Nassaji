@@ -382,3 +382,50 @@ export const profileAuditEventsRelations = relations(profileAuditEvents, ({ one 
   }),
 }));
 
+// ==========================================
+// 16. Publication Packages Table (Commercial Bundles)
+// ==========================================
+export const publicationPackages = pgTable('publication_packages', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  accountId: uuid('account_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  planId: text('plan_id').notNull(),
+  title: text('title').notNull(),
+  totalCapacity: integer('total_capacity').notNull(),
+  remainingCapacity: integer('remaining_capacity').notNull(),
+  validFrom: timestamp('valid_from', { withTimezone: true }).notNull(),
+  validUntil: timestamp('valid_until', { withTimezone: true }).notNull(),
+  status: text('status').notNull().default('ACTIVE'), // 'ACTIVE', 'EXHAUSTED', 'EXPIRED', 'SUSPENDED'
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ==========================================
+// 17. Package Entitlement Consumptions Table (Ledger)
+// Enforces: Exactly 1 unit consumed per published listing
+// ==========================================
+export const packageEntitlementConsumptions = pgTable('package_entitlement_consumptions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  packageId: uuid('package_id').references(() => publicationPackages.id, { onDelete: 'cascade' }).notNull(),
+  listingId: uuid('listing_id').references(() => listings.id, { onDelete: 'cascade' }).notNull(),
+  consumedByAccountId: uuid('consumed_by_account_id').references(() => users.id).notNull(),
+  consumedAt: timestamp('consumed_at', { withTimezone: true }).defaultNow().notNull(),
+  unitsConsumed: integer('units_consumed').default(1).notNull(),
+});
+
+// ==========================================
+// 18. Listing Payment Transactions Table (Financial Boundary)
+// Separates monetary transaction from package entitlement
+// ==========================================
+export const listingPaymentTransactions = pgTable('listing_payment_transactions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  listingId: uuid('listing_id').references(() => listings.id, { onDelete: 'cascade' }).notNull(),
+  payerAccountId: uuid('payer_account_id').references(() => users.id).notNull(),
+  amount: numeric('amount', { precision: 15, scale: 2 }), // Nullable pending pricing policy definition
+  currency: text('currency').default('TOMAN'),
+  status: text('status').notNull().default('PENDING'), // 'PENDING', 'SUCCESSFUL', 'FAILED', 'REFUNDED'
+  paymentGatewayProvider: text('payment_gateway_provider'), // Extension point
+  transactionReference: text('transaction_reference'),
+  paidAt: timestamp('paid_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+

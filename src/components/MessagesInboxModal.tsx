@@ -70,6 +70,7 @@ export const MessagesInboxModal: React.FC<MessagesInboxModalProps> = ({
             >
               <div className="relative shrink-0">
                 <img src={t.avatar} alt={t.senderName} className="w-11 h-11 rounded-full object-cover border" />
+                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" title="آنلاین" />
                 {t.unread > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center border border-white">
                     {t.unread}
